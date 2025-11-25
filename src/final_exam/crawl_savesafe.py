@@ -64,51 +64,57 @@ categories = {
 }
 
 headers = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.102 Safari/537.36"
+    "User-Agent": (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) "
+        "Chrome/98.0.4758.102 Safari/537.36"
+    )
 }
 
 
 def fetch_product_detail(product_url, product_name, max_retries=3):
-    """爬取商品詳細頁，加入重試機制和詳細 log"""
+    """抓取商品詳細頁，加入重試機制與詳細日誌"""
     for attempt in range(max_retries):
         try:
             print(
-                f"  Fetching detail for: {product_name[:30]}... (attempt {attempt + 1}/{max_retries})"
+                f"  取得商品詳細資訊：{product_name[:30]}... "
+                f"(第 {attempt + 1}/{max_retries} 次嘗試)"
             )
             r = requests.get(product_url, headers=headers, timeout=10)
             if r.status_code != 200:
-                print(f"    Failed with status code: {r.status_code}")
+                print(f"    請求失敗，狀態碼：{r.status_code}")
                 return ""
             soup = BeautifulSoup(r.text, "html.parser")
 
-            # 正確的選擇器：ProductDescriptionListArea
+            # 商品說明區塊選擇器
             detail_section = soup.select_one("div.ProductDescriptionListArea")
 
             if not detail_section:
-                # 備選方案
+                # 備用商品說明區塊
                 detail_section = soup.select_one("div.ProductDescriptionArea")
 
             if detail_section:
                 # 取得所有文字內容
                 detail_text = detail_section.get_text(separator="\n", strip=True)
-                print(f"    Successfully fetched detail ({len(detail_text)} chars)")
+                print(f"    成功取得商品說明（{len(detail_text)} 字元）")
                 return detail_text
             else:
-                print(f"    No detail section found")
+                print("    找不到商品說明區塊")
                 return ""
         except requests.exceptions.Timeout:
-            print(f"    Timeout on attempt {attempt + 1}/{max_retries}")
+            print(f"    連線逾時，第 {attempt + 1}/{max_retries} 次")
             if attempt < max_retries - 1:
                 time.sleep(2)
                 continue
-            print(f"    Failed after {max_retries} attempts")
+            print(f"    多次重試後仍逾時，放棄此商品")
             return ""
         except requests.exceptions.RequestException as e:
-            print(f"    Error: {e}")
+            print(f"    請求錯誤：{e}")
             return ""
 
 
 def fetch_products(category_id, category_name, subcategory_name):
+    """依分類抓取商品列表"""
     base_url = "https://www.savesafe.com.tw/Products/ProductList"
     page = 1
     products = []
@@ -119,7 +125,8 @@ def fetch_products(category_id, category_name, subcategory_name):
             r = requests.get(base_url, params=params, headers=headers, timeout=10)
             if r.status_code != 200:
                 print(
-                    f"Failed to fetch page {page} from {subcategory_name} (Category: {category_name}), status code: {r.status_code}"
+                    f"無法取得第 {page} 頁：{subcategory_name}"
+                    f"（大分類：{category_name}），狀態碼：{r.status_code}"
                 )
                 break
 
@@ -127,11 +134,12 @@ def fetch_products(category_id, category_name, subcategory_name):
             product_blocks = soup.select("div.col.mb-4.text-left.NewActivityItem")
             if not product_blocks:
                 print(
-                    f"No products found on page {page} for {subcategory_name} (Category: {category_name}), stopping."
+                    f"{subcategory_name}（大分類：{category_name}）"
+                    f"在第 {page} 頁沒有商品，停止爬取。"
                 )
                 break
 
-            print(f"Processing page {page} with {len(product_blocks)} products...")
+            print(f"處理第 {page} 頁，共 {len(product_blocks)} 筆商品資料...")
 
             for idx, block in enumerate(product_blocks, 1):
                 sku = (
@@ -151,6 +159,7 @@ def fetch_products(category_id, category_name, subcategory_name):
                 )
                 img_tag = block.select_one("img.card-img-top")
                 img_url = img_tag["src"] if img_tag else ""
+
                 link_tag = block.select_one('a[href^="ProductView"]')
                 if link_tag:
                     href = link_tag["href"]
@@ -161,14 +170,17 @@ def fetch_products(category_id, category_name, subcategory_name):
                     link = "https://www.savesafe.com.tw" + href
                 else:
                     link = ""
+
                 name_tag = block.select_one("p.card-title.ItemName")
                 name = name_tag.text.strip() if name_tag else ""
+
                 description_tag = block.select_one("p.mb-2.ObjectName")
                 description = description_tag.text.strip() if description_tag else ""
+
                 price_tag = block.select_one("span.Price")
                 price = price_tag.text.strip() if price_tag else ""
 
-                print(f"[{idx}/{len(product_blocks)}] Processing: {name[:40]}...")
+                print(f"[{idx}/{len(product_blocks)}] 處理商品：{name[:40]}...")
                 description_detail = fetch_product_detail(link, name) if link else ""
 
                 products.append(
@@ -188,13 +200,15 @@ def fetch_products(category_id, category_name, subcategory_name):
                 )
 
             print(
-                f"✓ Fetched {len(product_blocks)} products from page {page} of {subcategory_name} (Category: {category_name})"
+                f"已從 {subcategory_name}（大分類：{category_name}）"
+                f"第 {page} 頁抓取 {len(product_blocks)} 筆商品。"
             )
 
             next_page_link = soup.select_one(f'a[href*="Pg={page+1}"]')
             if not next_page_link:
                 print(
-                    f"No next page for {subcategory_name} (Category: {category_name}), done."
+                    f"{subcategory_name}（大分類：{category_name}）"
+                    f"沒有下一頁，完成此子分類。"
                 )
                 break
 
@@ -202,57 +216,61 @@ def fetch_products(category_id, category_name, subcategory_name):
             time.sleep(1)
 
         except requests.exceptions.Timeout:
-            print(f"Timeout fetching page {page}, retrying...")
+            print(f"抓取第 {page} 頁時連線逾時，稍後重試...")
             time.sleep(3)
             continue
         except Exception as e:
-            print(f"Error on page {page}: {e}")
+            print(f"第 {page} 頁發生錯誤：{e}")
             break
 
     return products
 
 
 def save_to_csv_append(products, filename, write_header=False):
-    """追加模式寫入 CSV"""
+    """以追加模式寫入 CSV 檔案"""
     if not products:
-        print("No data to save.")
+        print("沒有資料可寫入。")
         return
+
     keys = products[0].keys()
     mode = "a" if not write_header else "w"
+
     with open(filename, mode, newline="", encoding="utf-8-sig") as f:
         dict_writer = csv.DictWriter(f, keys)
         if write_header:
             dict_writer.writeheader()
         dict_writer.writerows(products)
-    print(f"💾 Saved {len(products)} products to {filename}\n")
+
+    print(f"已將 {len(products)} 筆商品寫入 {filename}\n")
 
 
 if __name__ == "__main__":
-    # 生成帶時間戳記的檔案名稱
+    # 產生含時間戳記的輸出檔名
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     filename = f"./output/savesafe_products_{timestamp}.csv"
 
-    print(f"\n{'='*80}")
-    print(f"SaveSafe Product Crawler")
-    print(f"Output file: {filename}")
-    print(f"{'='*80}\n")
+    print("\n" + "=" * 80)
+    print("SaveSafe 商品爬蟲")
+    print(f"輸出檔案：{filename}")
+    print("=" * 80 + "\n")
 
     first_write = True
     total_products = 0
 
     for category_name, subcats in categories.items():
         for subcat_name, t_s_id in subcats:
-            print(f"\n{'='*80}")
-            print(f"Start crawling {subcat_name} under {category_name}")
-            print(f"{'='*80}")
+            print("\n" + "=" * 80)
+            print(f"開始爬取：{category_name} - {subcat_name}")
+            print("=" * 80)
+
             prods = fetch_products(t_s_id, category_name, subcat_name)
 
-            # 每個子分類爬完就寫入
+            # 每個子分類爬完就寫入檔案
             save_to_csv_append(prods, filename, write_header=first_write)
             first_write = False
             total_products += len(prods)
 
-    print(f"\n{'='*80}")
-    print(f"Crawling completed! Total products: {total_products}")
-    print(f"Data saved to: {filename}")
-    print(f"{'='*80}")
+    print("\n" + "=" * 80)
+    print(f"全部爬取完成！總商品數：{total_products}")
+    print(f"資料已寫入：{filename}")
+    print("=" * 80)
