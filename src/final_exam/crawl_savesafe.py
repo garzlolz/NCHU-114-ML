@@ -73,11 +73,11 @@ def fetch_product_detail(product_url, product_name, max_retries=3):
     for attempt in range(max_retries):
         try:
             print(
-                f"  → Fetching detail for: {product_name[:30]}... (attempt {attempt + 1}/{max_retries})"
+                f"  Fetching detail for: {product_name[:30]}... (attempt {attempt + 1}/{max_retries})"
             )
             r = requests.get(product_url, headers=headers, timeout=10)
             if r.status_code != 200:
-                print(f"    ✗ Failed with status code: {r.status_code}")
+                print(f"    Failed with status code: {r.status_code}")
                 return ""
             soup = BeautifulSoup(r.text, "html.parser")
 
@@ -91,20 +91,20 @@ def fetch_product_detail(product_url, product_name, max_retries=3):
             if detail_section:
                 # 取得所有文字內容
                 detail_text = detail_section.get_text(separator="\n", strip=True)
-                print(f"    ✓ Successfully fetched detail ({len(detail_text)} chars)")
+                print(f"    Successfully fetched detail ({len(detail_text)} chars)")
                 return detail_text
             else:
-                print(f"    ⚠ No detail section found")
+                print(f"    No detail section found")
                 return ""
         except requests.exceptions.Timeout:
-            print(f"    ⏱ Timeout on attempt {attempt + 1}/{max_retries}")
+            print(f"    Timeout on attempt {attempt + 1}/{max_retries}")
             if attempt < max_retries - 1:
                 time.sleep(2)
                 continue
-            print(f"    ✗ Failed after {max_retries} attempts")
+            print(f"    Failed after {max_retries} attempts")
             return ""
         except requests.exceptions.RequestException as e:
-            print(f"    ✗ Error: {e}")
+            print(f"    Error: {e}")
             return ""
 
 
@@ -253,6 +253,6 @@ if __name__ == "__main__":
             total_products += len(prods)
 
     print(f"\n{'='*80}")
-    print(f"✓ Crawling completed! Total products: {total_products}")
-    print(f"✓ Data saved to: {filename}")
+    print(f"Crawling completed! Total products: {total_products}")
+    print(f"Data saved to: {filename}")
     print(f"{'='*80}")
