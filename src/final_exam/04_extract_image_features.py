@@ -61,12 +61,12 @@ test_features, test_success = extract_image_features_500(test_sku)
 
 if test_success:
     TARGET_DIM = test_features.shape[0]
-    print(f"✓ 測試成功！")
+    print(f"  測試成功！")
     print(f"  顏色特徵: 96 維")
     print(f"  HOG 特徵: {TARGET_DIM - 96} 維")
     print(f"  總維度: {TARGET_DIM} 維")
 else:
-    print("✗ 測試失敗，請檢查圖片路徑")
+    print("  測試失敗，請檢查圖片路徑")
     exit(1)
 
 # 提取所有圖片特徵
@@ -117,7 +117,7 @@ if failed_skus:
 # 儲存特徵
 output_path = "output/image_features_500.npy"
 np.save(output_path, image_features_array)
-print(f"\n✓ 圖片特徵已儲存到 {output_path}")
+print(f"\n 圖片特徵已儲存到 {output_path}")
 
 # 驗證
 print("\n" + "=" * 70)
@@ -134,4 +134,4 @@ print(f"  最大值: {loaded.max():.4f}")
 print(f"  平均值: {loaded.mean():.4f}")
 print(f"  零向量數量: {(loaded.sum(axis=1) == 0).sum()}")
 
-print("\n✓ 特徵提取完成！")
+print("\n 特徵提取完成！")
