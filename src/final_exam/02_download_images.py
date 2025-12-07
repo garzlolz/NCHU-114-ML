@@ -6,7 +6,7 @@ import os
 from tqdm import tqdm
 import time
 
-df = pd.read_csv("output/savesafe_products_20251114_103512.csv", encoding="utf-8-sig")
+df = pd.read_csv("output/savesafe_products_20251207_143149.csv", encoding="utf-8-sig")
 
 # 建立圖片資料夾
 os.makedirs("output/images", exist_ok=True)
