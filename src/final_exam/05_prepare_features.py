@@ -8,8 +8,10 @@ import os
 
 # 設定中文字體 (雖然這支程式主要是處理數據，但保持一致性)
 import matplotlib.pyplot as plt
-plt.rcParams["font.sans-serif"] = ["Microsoft JhengHei", "SimHei", "Arial"]
+
+plt.rcParams["font.sans-serif"] = ["Noto Sans CJK TC"]
 plt.rcParams["axes.unicode_minus"] = False
+
 
 def main():
     print("=" * 70)
@@ -23,13 +25,13 @@ def main():
         return
 
     df = pd.read_csv(csv_path, encoding="utf-8-sig")
-    
+
     # 讀取圖片特徵
     img_features_path = "output/image_features_500.npy"
     if not os.path.exists(img_features_path):
         print(f"錯誤: 找不到檔案 {img_features_path}")
         return
-        
+
     image_features = np.load(img_features_path)
 
     print(f"商品數: {len(df)}")
@@ -73,7 +75,7 @@ def main():
     print("\n" + "=" * 70)
     print("步驟 4: 圖片特徵標準化")
     print("=" * 70)
-    
+
     scaler_img = StandardScaler()
     image_features_scaled = scaler_img.fit_transform(image_features)
     print(f"圖片特徵已標準化")
@@ -100,10 +102,10 @@ def main():
 
     X = hstack(
         [
-            X_text_name,           # 500 維
-            X_text_desc,           # 500 維
+            X_text_name,  # 500 維
+            X_text_desc,  # 500 維
             csr_matrix(image_features_scaled),  # 3012 維
-            csr_matrix(X_price),   # 1 維
+            csr_matrix(X_price),  # 1 維
         ]
     )
 
@@ -134,12 +136,13 @@ def main():
                     "name_dim": X_text_name.shape[1],
                     "desc_dim": X_text_desc.shape[1],
                     "img_dim": image_features.shape[1],
-                    "price_dim": X_price.shape[1]
-                }
+                    "price_dim": X_price.shape[1],
+                },
             },
             f,
         )
     print(f"處理完成！資料已儲存至 {output_file}")
+
 
 if __name__ == "__main__":
     main()
