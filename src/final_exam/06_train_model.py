@@ -35,32 +35,40 @@ plt.rcParams["axes.unicode_minus"] = False
 def build_keras_model(input_dim, num_classes):
     """
     使用 Functional API 建立 Keras 神經網路模型
-    結構：input -> 1024 -> 512 -> 256 -> 128 -> output(softmax)
+    結構：input -> 1024 -> 512 -> 256 -> 128 -> 64 -> 32 -> output(softmax)
     """
     inputs = Input(shape=(input_dim,), name="input_features")
 
     # 第一層：1024 neurons
     x = Dense(1024, activation="relu", name="dense_1024")(inputs)
-    x = Dropout(0.4, name="dropout_0")(x)
+    x = Dropout(0.5, name="dropout_0")(x)
 
     # 第二層：512 neurons
     x = Dense(512, activation="relu", name="dense_512")(x)
-    x = Dropout(0.3, name="dropout_1")(x)
+    x = Dropout(0.4, name="dropout_1")(x)
 
     # 第三層：256 neurons
     x = Dense(256, activation="relu", name="dense_256")(x)
-    x = Dropout(0.3, name="dropout_2")(x)
+    x = Dropout(0.4, name="dropout_2")(x)
 
     # 第四層：128 neurons
     x = Dense(128, activation="relu", name="dense_128")(x)
-    x = Dropout(0.2, name="dropout_3")(x)
+    x = Dropout(0.3, name="dropout_3")(x)
+
+    # 第五層：64 neurons
+    x = Dense(64, activation="relu", name="dense_64")(x)
+    x = Dropout(0.3, name="dropout_4")(x)
+
+    # 第六層：32 neurons
+    x = Dense(32, activation="relu", name="dense_32")(x)
+    x = Dropout(0.2, name="dropout_5")(x)
 
     # 輸出層：num_classes, softmax
     outputs = Dense(num_classes, activation="softmax", name="output")(x)
 
     model = Model(inputs=inputs, outputs=outputs, name="product_classifier_keras")
 
-    optimizer = Adam(learning_rate=0.0005)
+    optimizer = Adam(learning_rate=0.0001)
 
     model.compile(
         optimizer=optimizer,
@@ -174,7 +182,7 @@ def main():
     print(f"訓練 Neural Network (Keras) with different batch sizes...")
     print(f"{'='*70}")
 
-    batch_sizes = [32, 64, 128]
+    batch_sizes = [16, 32, 64]
     keras_histories = {}
     keras_accuracies = {}
     best_keras_model = None
@@ -202,7 +210,7 @@ def main():
         history = keras_model.fit(
             X_train,
             y_train_keras,
-            epochs=120,
+            epochs=150,
             batch_size=bs,
             validation_split=0.15,
             callbacks=[early_stop],
