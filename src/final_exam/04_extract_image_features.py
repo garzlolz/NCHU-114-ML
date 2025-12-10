@@ -6,10 +6,12 @@ from skimage.feature import hog
 from tqdm import tqdm
 import os
 
+
 # ======================================================================
-# 圖片特徵提取
+# 圖片特徵提取（RGB + HSV + HOG）
 # CSV 欄位: brand(品牌), name(商品名稱), description(詳細描述)
 # ======================================================================
+
 
 # 讀取資料
 df = pd.read_csv(
@@ -19,7 +21,7 @@ print(f"總商品數: {len(df)}")
 
 
 def extract_image_features_500(sku):
-    """提取圖片特徵 - 500x500 原始解析度"""
+    """提取圖片特徵 - 500x500 原始解析度（RGB + HSV + HOG）"""
     img_path = f"output/images/{sku}.jpg"
 
     if not os.path.exists(img_path):
@@ -35,23 +37,41 @@ def extract_image_features_500(sku):
             img = img.resize((500, 500))
             img_array = np.array(img)
 
-        # 特徵 1: 顏色直方圖（RGB 各 32 bins = 96 維）
+        # ==================== 特徵 1: RGB 顏色直方圖（32 bins × 3 = 96 維）====================
         hist_r = cv2.calcHist([img_array], [0], None, [32], [0, 256]).flatten()
         hist_g = cv2.calcHist([img_array], [1], None, [32], [0, 256]).flatten()
         hist_b = cv2.calcHist([img_array], [2], None, [32], [0, 256]).flatten()
-        color_features = np.concatenate([hist_r, hist_g, hist_b])
+        rgb_features = np.concatenate([hist_r, hist_g, hist_b])  # 96 維
 
-        # 特徵 2: HOG 特徵
+        # ==================== 特徵 2: HSV 顏色直方圖（16 bins × 3 = 48 維）====================
+        # 轉換為 HSV 色彩空間（對光照變化更穩健）
+        img_hsv = cv2.cvtColor(img_array, cv2.COLOR_RGB2HSV)
+
+        # H (色相): 0-180，使用 16 bins
+        hist_h = cv2.calcHist([img_hsv], [0], None, [16], [0, 180]).flatten()
+
+        # S (飽和度): 0-256，使用 16 bins
+        hist_s = cv2.calcHist([img_hsv], [1], None, [16], [0, 256]).flatten()
+
+        # V (明度): 0-256，使用 16 bins
+        hist_v = cv2.calcHist([img_hsv], [2], None, [16], [0, 256]).flatten()
+
+        hsv_features = np.concatenate([hist_h, hist_s, hist_v])  # 48 維
+
+        # ==================== 特徵 3: HOG 特徵（方向梯度直方圖）====================
         gray = cv2.cvtColor(img_array, cv2.COLOR_RGB2GRAY)
         hog_features = hog(
             gray,
-            pixels_per_cell=(50, 50),  # 適應 500x500
-            cells_per_block=(2, 2),
+            pixels_per_cell=(50, 50),  # 適應 500x500 (10×10 cells)
+            cells_per_block=(2, 2),  # 每個 block 包含 4 個 cells
             visualize=False,
+            feature_vector=True,
         )
 
-        # 合併特徵
-        features = np.concatenate([color_features, hog_features])
+        # ==================== 合併所有特徵 ====================
+        features = np.concatenate([rgb_features, hsv_features, hog_features])
+        # RGB(96) + HSV(48) + HOG(約3000) = 約3144 維
+
         return features, True
 
     except Exception as e:
@@ -66,9 +86,10 @@ test_features, test_success = extract_image_features_500(test_sku)
 
 if test_success:
     TARGET_DIM = test_features.shape[0]
-    print(f"  測試成功！")
-    print(f"  顏色特徵: 96 維")
-    print(f"  HOG 特徵: {TARGET_DIM - 96} 維")
+    print(f"  測試成功")
+    print(f"  RGB 顏色特徵: 96 維 (32 bins × 3 通道)")
+    print(f"  HSV 顏色特徵: 48 維 (16 bins × 3 通道)")
+    print(f"  HOG 特徵: {TARGET_DIM - 144} 維")
     print(f"  總維度: {TARGET_DIM} 維")
 else:
     print("  測試失敗，請檢查圖片路徑")
@@ -76,7 +97,7 @@ else:
 
 # 提取所有圖片特徵
 print("\n" + "=" * 70)
-print("開始提取圖片特徵 (500x500 原始解析度)")
+print("開始提取圖片特徵 (500x500，RGB + HSV + HOG)")
 print(f"目標特徵維度: {TARGET_DIM}")
 print("=" * 70)
 
@@ -112,6 +133,9 @@ print("\n" + "=" * 70)
 print("提取結果統計")
 print("=" * 70)
 print(f"圖片特徵維度: {image_features_array.shape}")
+print(f"  - RGB 直方圖: 96 維")
+print(f"  - HSV 直方圖: 48 維")
+print(f"  - HOG 特徵: {TARGET_DIM - 144} 維")
 print(f"成功提取: {success_count}/{len(df)}")
 print(f"失敗數量: {len(failed_skus)}")
 print(f"成功率: {success_count/len(df)*100:.1f}%")
@@ -139,4 +163,4 @@ print(f"  最大值: {loaded.max():.4f}")
 print(f"  平均值: {loaded.mean():.4f}")
 print(f"  零向量數量: {(loaded.sum(axis=1) == 0).sum()}")
 
-print("\n 特徵提取完成！")
+print("\n 特徵提取完成")

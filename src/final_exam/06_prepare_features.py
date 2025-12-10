@@ -63,13 +63,17 @@ def main():
 
     # TF-IDF 向量化 - brand + name
     print("\n處理品牌+商品名稱...")
-    tfidf_name = TfidfVectorizer(max_features=800, ngram_range=(1, 2))
+    tfidf_name = TfidfVectorizer(
+        max_features=2296, ngram_range=(1, 3), max_df=0.8, sublinear_tf=True
+    )
     X_text_name = tfidf_name.fit_transform(df["text_brand_name"])
     print(f"品牌+名稱特徵維度: {X_text_name.shape}")
 
     # TF-IDF 向量化 - description
     print("處理商品描述...")
-    tfidf_desc = TfidfVectorizer(max_features=200, ngram_range=(1, 2))
+    tfidf_desc = TfidfVectorizer(
+        max_features=2769, ngram_range=(1, 3), max_df=0.8, sublinear_tf=True
+    )
     X_text_desc = tfidf_desc.fit_transform(df["text_desc"])
     print(f"description 特徵維度: {X_text_desc.shape}")
 
@@ -123,11 +127,11 @@ def main():
     )
 
     print(f"最終特徵維度: {X.shape}")
-    print(f"  - 文字 (brand+name):  500 維")
-    print(f"  - 文字 (description): 500 維")
-    print(f"  - 圖片 (500x500):    3012 維")
+    print(f"  - 文字 (brand+name):  2296 維")
+    print(f"  - 文字 (description): 2769 維")
+    print(f"  - 圖片 (500x500):    3108 維")
     print(f"  - 價格:                 1 維")
-    print(f"  - 總計:              4013 維")
+    print(f"  - 總計:              8174 維")
 
     # ==================== 7. 儲存處理後的資料 ====================
     print("\n" + "=" * 70)
