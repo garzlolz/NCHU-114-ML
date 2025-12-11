@@ -8,10 +8,10 @@ import time
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
 
-from tensorflow.keras import Model, Input
+from tensorflow.keras import Model, Input, regularizers
 from tensorflow.keras.layers import Dense, Dropout, BatchNormalization, Activation
 from tensorflow.keras.utils import to_categorical
-from tensorflow.keras.callbacks import EarlyStopping
+from tensorflow.keras.callbacks import EarlyStopping, ReduceLROnPlateau
 from tensorflow.keras.optimizers import Adam
 
 from scipy import sparse
@@ -38,29 +38,35 @@ def build_keras_model(input_dim, num_classes, learning_rate=0.0003):
     """
     inputs = Input(shape=(input_dim,), sparse=True, name="input_features")
 
-    # 第一層: 1024 neurons
-    x = Dense(1024, name="dense_1024")(inputs)
-    x = BatchNormalization(name="batchnorm_0")(x)
-    x = Activation("relu", name="activation_0")(x)
-    x = Dropout(0.45, name="dropout_0")(x)
+    # # 第一層: 1024 neurons
+    # x = Dense(1024, name="dense_1024")(inputs)
+    # x = BatchNormalization(name="batchnorm_0")(x)
+    # x = Activation("relu", name="activation_0")(x)
+    # x = Dropout(0.45, name="dropout_0")(x)
 
     # 第二層: 512 neurons
-    x = Dense(512, name="dense_512")(x)
+    x = Dense(512, name="dense_512", kernel_regularizer=regularizers.l2(0.001))(inputs)
     x = BatchNormalization(name="batchnorm_1")(x)
     x = Activation("relu", name="activation_1")(x)
     x = Dropout(0.45, name="dropout_1")(x)
 
     # 第三層: 256 neurons
-    x = Dense(256, name="dense_256")(x)
+    x = Dense(256, name="dense_256", kernel_regularizer=regularizers.l2(0.001))(x)
     x = BatchNormalization(name="batchnorm_2")(x)
     x = Activation("relu", name="activation_2")(x)
     x = Dropout(0.4, name="dropout_2")(x)
 
     # 第四層: 128 neurons
-    x = Dense(128, name="dense_128")(x)
+    x = Dense(128, name="dense_128", kernel_regularizer=regularizers.l2(0.001))(x)
     x = BatchNormalization(name="batchnorm_3")(x)
     x = Activation("relu", name="activation_3")(x)
-    x = Dropout(0.3, name="dropout_3")(x)
+    x = Dropout(0.4, name="dropout_3")(x)
+
+    # 第五層: 64 neurons
+    x = Dense(64, name="dense_64", kernel_regularizer=regularizers.l2(0.001))(x)
+    x = BatchNormalization(name="batchnorm_4")(x)
+    x = Activation("relu", name="activation_4")(x)
+    x = Dropout(0.3, name="dropout_4")(x)
 
     outputs = Dense(num_classes, activation="softmax", name="output")(x)
 
@@ -120,8 +126,8 @@ def main():
     print("步驟 2: Keras Grid Search (learning_rate × batch_size)")
     print("=" * 70)
 
-    learning_rates = [0.0004, 0.0003]
-    batch_sizes = [48, 64]
+    learning_rates = [0.00026, 0.00028, 0.0003]
+    batch_sizes = [16, 20, 24, 28]
 
     keras_histories = {}
     keras_accuracies = {}
@@ -145,11 +151,19 @@ def main():
                 learning_rate=lr,
             )
 
+            reduce_lr = ReduceLROnPlateau(
+                monitor="val_loss",  # 監控驗證損失
+                factor=0.5,  # 當指標沒進步時，學習率變為原來的 0.5 倍
+                patience=5,  # 忍受 5 個 epoch 沒進步就降速
+                min_lr=1e-6,  # 學習率下限
+                verbose=0,  # 設為 1 可以看到何時觸發，設為 0 保持輸出乾淨
+            )
+
             early_stopping = EarlyStopping(
                 monitor="val_loss",
-                patience=20,
+                patience=30,
                 restore_best_weights=True,
-                min_delta=0.0001,
+                min_delta=0.0005,
             )
 
             start_time = time.time()
@@ -169,7 +183,7 @@ def main():
                 batch_size=bs,
                 epochs=num_epochs,
                 validation_data=(X_valid, y_valid),
-                callbacks=[early_stopping],
+                callbacks=[early_stopping, reduce_lr],
                 verbose=0,  # 設為 0 減少輸出
             )
 
@@ -198,11 +212,13 @@ def main():
     print("\n" + "=" * 70)
     print("Keras Grid Search 結果彙總")
     print("=" * 70)
-    
+
     for (lr, bs), acc in sorted(keras_accuracies.items()):
         print(f"  lr={lr:8g}, batch_size={bs:3d}: {acc:.2%}")
-    
-    print(f"\n最佳組合: lr={best_keras_lr}, bs={best_keras_bs}, 準確率={best_keras_acc:.2%}")
+
+    print(
+        f"\n最佳組合: lr={best_keras_lr}, bs={best_keras_bs}, 準確率={best_keras_acc:.2%}"
+    )
 
     # ==================== 4. 儲存結果 ====================
     print("\n步驟 4: 儲存神經網路訓練結果")
@@ -243,7 +259,9 @@ def main():
     axes[0].plot(history.history["val_loss"], label="驗證集損失")
     axes[0].set_xlabel("Epoch", fontsize=12)
     axes[0].set_ylabel("Loss", fontsize=12)
-    axes[0].set_title(f"Keras 損失曲線 (lr={best_keras_lr}, bs={best_keras_bs})", fontsize=14)
+    axes[0].set_title(
+        f"Keras 損失曲線 (lr={best_keras_lr}, bs={best_keras_bs})", fontsize=14
+    )
     axes[0].legend()
     axes[0].grid(True, alpha=0.3)
 
@@ -251,12 +269,16 @@ def main():
     axes[1].plot(history.history["val_accuracy"], label="驗證集準確率")
     axes[1].set_xlabel("Epoch", fontsize=12)
     axes[1].set_ylabel("Accuracy", fontsize=12)
-    axes[1].set_title(f"Keras 準確率曲線 (lr={best_keras_lr}, bs={best_keras_bs})", fontsize=14)
+    axes[1].set_title(
+        f"Keras 準確率曲線 (lr={best_keras_lr}, bs={best_keras_bs})", fontsize=14
+    )
     axes[1].legend()
     axes[1].grid(True, alpha=0.3)
 
     plt.tight_layout()
-    plt.savefig("output/result_images/keras_training_history.png", dpi=300, bbox_inches="tight")
+    plt.savefig(
+        "output/result_images/keras_training_history.png", dpi=300, bbox_inches="tight"
+    )
     print("訓練歷史圖已儲存到 output/result_images/keras_training_history.png")
     plt.close()
 
@@ -268,13 +290,22 @@ def main():
     plt.xticks(bs_list)
     plt.xlabel("batch_size", fontsize=12)
     plt.ylabel("Accuracy", fontsize=12)
-    plt.title(f"Keras 不同 batch_size 準確率比較\n(learning_rate={best_keras_lr})", fontsize=14)
+    plt.title(
+        f"Keras 不同 batch_size 準確率比較\n(learning_rate={best_keras_lr})",
+        fontsize=14,
+    )
     for x, yv in zip(bs_list, acc_list):
         plt.text(x, yv + 0.005, f"{yv:.2%}", ha="center", fontsize=11)
     plt.grid(True, alpha=0.3)
     plt.tight_layout()
-    plt.savefig("output/result_images/keras_batchsize_comparison.png", dpi=300, bbox_inches="tight")
-    print("batch_size 比較圖已儲存到 output/result_images/keras_batchsize_comparison.png")
+    plt.savefig(
+        "output/result_images/keras_batchsize_comparison.png",
+        dpi=300,
+        bbox_inches="tight",
+    )
+    print(
+        "batch_size 比較圖已儲存到 output/result_images/keras_batchsize_comparison.png"
+    )
     plt.close()
 
     # 5.3 混淆矩陣
@@ -298,7 +329,9 @@ def main():
     plt.xticks(rotation=45, ha="right")
     plt.yticks(rotation=0)
     plt.tight_layout()
-    plt.savefig("output/result_images/keras_confusion_matrix.png", dpi=300, bbox_inches="tight")
+    plt.savefig(
+        "output/result_images/keras_confusion_matrix.png", dpi=300, bbox_inches="tight"
+    )
     print("混淆矩陣已儲存到 output/result_images/keras_confusion_matrix.png")
     plt.close()
 
