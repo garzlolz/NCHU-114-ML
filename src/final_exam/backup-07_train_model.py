@@ -207,8 +207,8 @@ def main():
     print("訓練 Neural Network (Keras) - Grid Search (learning_rate × batch_size)...")
     print(f"{'='*70}")
 
-    learning_rates = [0.003, 0.0003, 0.0001]
-    batch_sizes = [32, 48, 64, 96]
+    learning_rates = [0.0005, 0.0003, 0.0002]
+    batch_sizes = [48, 64]
 
     keras_histories = {}      # key: (lr, bs) -> History
     keras_accuracies = {}     # key: (lr, bs) -> accuracy
@@ -220,7 +220,7 @@ def main():
     best_keras_acc = 0
     best_keras_y_pred = None
 
-    num_epochs = 200  # 有 EarlyStopping，實際不會跑這麼多
+    num_epochs = 300 
 
     for lr in learning_rates:
         for bs in batch_sizes:
