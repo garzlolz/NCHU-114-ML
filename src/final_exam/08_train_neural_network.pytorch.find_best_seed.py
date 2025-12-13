@@ -71,7 +71,7 @@ def build_keras_model(input_dim, num_classes, learning_rate):
 
 
 def main():
-    print("Starting Standalone Seed Miner...")
+    print("開始執行獨立 Seed 挖掘程式...")
 
     os.makedirs("output/models", exist_ok=True)
     os.makedirs("output/result_images", exist_ok=True)
@@ -79,7 +79,7 @@ def main():
     # 讀取資料
     traditional_file = "output/models/traditional_models.pkl"
     if not os.path.exists(traditional_file):
-        print(f"Error: {traditional_file} not found.")
+        print(f"錯誤: 找不到 {traditional_file}")
         return
 
     with open(traditional_file, "rb") as f:
@@ -147,7 +147,7 @@ def main():
                 prev_results = pickle.load(f)
                 global_best_acc = prev_results.get("best_accuracy", 0)
                 best_seed = prev_results.get("best_seed", None)
-            print(f"Current Best Record: Seed {best_seed}, Acc {global_best_acc:.4f}")
+            print(f"目前最佳紀錄: Seed {best_seed}, 準確率 {global_best_acc:.4f}")
         except Exception:
             pass
 
@@ -210,13 +210,13 @@ def main():
             acc = accuracy_score(y_test, preds)
 
             print(
-                f"Iter {iteration} | Seed: {seed:<7} | Acc: {acc:.4f} | Time: {elapsed_time:.1f}s"
+                f"第 {iteration} 次 | Seed: {seed:<7} | 準確率: {acc:.4f} | 耗時: {elapsed_time:.1f}s"
             )
 
             # 若創新高則儲存
             if acc > global_best_acc:
                 print(
-                    f">>> New Best Found! Seed {seed} ({acc:.4f}) beat ({global_best_acc:.4f})"
+                    f">>> 發現新紀錄! Seed {seed} ({acc:.4f}) 超越舊紀錄 ({global_best_acc:.4f})"
                 )
 
                 global_best_acc = acc
@@ -257,7 +257,7 @@ def main():
                 plt.close()
 
     except KeyboardInterrupt:
-        print("\nMining stopped by user.")
+        print("\n使用者停止挖掘程序。")
 
 
 if __name__ == "__main__":
