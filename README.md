@@ -5,7 +5,7 @@
 . (專案根目錄)
 ├── README.md                                               # 專案說明文件
 └── src/                                                    # 來源碼 (Source) 資料夾
-    ├── final_exam/                                         # 專題程式存放位置
+    ├── semester-project/                                   # 專題程式存放位置
     │   │── output/                                         # 輸出
     │   │   ├── images/                                     # 爬蟲圖檔 
     │   │   ├── result_images/                              # matplotlib 圖檔
