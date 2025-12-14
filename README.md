@@ -96,7 +96,7 @@ python -c "import torch; print(f'Torch Version: {torch.__version__}'); print(f'C
 進入專案目錄並執行對應的訓練腳本：
 
 ```bash
-cd src/final_exam
+cd src/semester-project
 python 08_winpytorch_train_neural_network.py
 ```
 
@@ -200,7 +200,7 @@ python 08_winpytorch_train_neural_network.py
 在已進入 Dev Container 的 VS Code 終端：
 
 ```bash
-cd /workspace/src/final_exam
+cd /workspace/src/semester-project
 python 07_train_model.py
 ```
 
