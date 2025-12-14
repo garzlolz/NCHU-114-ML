@@ -1,21 +1,22 @@
 # NCHU 114, 資管系在職碩專班 專題與功課
 
 ## 專題目錄
+
 ```text
 . (專案根目錄)
 ├── README.md                                               # 專案說明文件
 └── src/                                                    # 來源碼 (Source) 資料夾
     ├── semester-project/                                   # 專題程式存放位置
     │   │── output/                                         # 輸出
-    │   │   ├── images/                                     # 爬蟲圖檔 
+    │   │   ├── images/                                     # 爬蟲圖檔
     │   │   ├── result_images/                              # matplotlib 圖檔
-    │   │   ├── savesafe_cleaned_products_20251207_143149   # 前處理後資料 
+    │   │   ├── savesafe_cleaned_products_20251207_143149   # 前處理後資料
     │   │   └──  savesafe_products_20251207_143149          # 大買家爬蟲資料
     │   └── 08_winpytorch_train_neural_network.py           # (Keras 3 + PyTorch 版本)
     └── week...                                             # 課程功課
-````
+```
 
------
+---
 
 ## 一、環境目標
 
@@ -26,7 +27,7 @@
 
 以下是修正後的 **方案 A** 區塊，請使用這段取代原本的內容：
 
------
+---
 
 ## 二、方案 A (推薦)：本機 Conda 環境 (PyTorch + Keras 3)
 
@@ -87,9 +88,9 @@ python -c "import torch; print(f'Torch Version: {torch.__version__}'); print(f'C
 
 **預期輸出：**
 
-  - `CUDA Available: True`
-  - `CUDA Version: 13.0` (或接近版本)
-  - `Device: NVIDIA GeForce RTX 5070`
+- `CUDA Available: True`
+- `CUDA Version: 13.0` (或接近版本)
+- `Device: NVIDIA GeForce RTX 5070`
 
 ### 6\. 執行訓練
 
@@ -100,7 +101,7 @@ cd src/semester-project
 python 08_winpytorch_train_neural_network.py
 ```
 
------
+---
 
 ## 三、方案 B (備用)：NVIDIA Docker 容器
 
@@ -137,8 +138,8 @@ python 08_winpytorch_train_neural_network.py
 
 在 WSL conda 環境 `wsl_ml_hw` 中用 pip 安裝了 `tensorflow==2.20.0` 和一堆 `nvidia-*-cu12` 套件，訓練時出現：
 
-  - `TensorFlow was not built with CUDA kernel binaries compatible with compute capability 12.0`
-  - `CUDA_ERROR_INVALID_PTX`、`CUDA_ERROR_INVALID_HANDLE`
+- `TensorFlow was not built with CUDA kernel binaries compatible with compute capability 12.0`
+- `CUDA_ERROR_INVALID_PTX`、`CUDA_ERROR_INVALID_HANDLE`
 
 原因是 pip 版 TF 2.20 沒有為 Blackwell 的 compute capability 12.0 編好對應的 CUDA binary，對 RTX 50 系列在新 driver 上相容性不好。
 解法是改用 **NVIDIA 官方 TensorFlow 容器**，裡面已針對新架構編譯好。
@@ -158,10 +159,7 @@ python 08_winpytorch_train_neural_network.py
       "postCreateCommand": "pip install jupyter matplotlib ipykernel",
       "customizations": {
         "vscode": {
-          "extensions": [
-            "ms-python.python",
-            "ms-toolsai.jupyter"
-          ]
+          "extensions": ["ms-python.python", "ms-toolsai.jupyter"]
         }
       }
     }
@@ -171,8 +169,8 @@ python 08_winpytorch_train_neural_network.py
 
 2.  在 VS Code 中：
 
-      - `Ctrl + Shift + P` → `Dev Containers: Reopen in Container`
-      - 進入容器後終端提示變成 `root@...:/workspace#`，`python -c "import tensorflow as tf; ..."` 可看到 GPU。
+    - `Ctrl + Shift + P` → `Dev Containers: Reopen in Container`
+    - 進入容器後終端提示變成 `root@...:/workspace#`，`python -c "import tensorflow as tf; ..."` 可看到 GPU。
 
 ### 4\. 在容器裡補裝需要的套件與字型
 
@@ -206,9 +204,6 @@ python 07_train_model.py
 
 這樣：
 
-  - 程式碼仍在主機 `~/repos/NCHU-114-Master-ML-homework` 裡（透過掛載）。
-  - 訓練在容器環境中進行，使用 NVIDIA 官方編譯好的 TensorFlow + CUDA 12.8，穩定支援 RTX 5070（Blackwell）。
-  - 不再依賴本機 conda 的 TensorFlow，避免 `CUDA_ERROR_INVALID_PTX` 類問題。
-
-
-```
+- 程式碼仍在主機 `~/repos/NCHU-114-Master-ML-homework` 裡（透過掛載）。
+- 訓練在容器環境中進行，使用 NVIDIA 官方編譯好的 TensorFlow + CUDA 12.8，穩定支援 RTX 5070（Blackwell）。
+- 不再依賴本機 conda 的 TensorFlow，避免 `CUDA_ERROR_INVALID_PTX` 類問題。
