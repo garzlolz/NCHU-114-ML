@@ -98,6 +98,9 @@ def main():
     print("神經網路模型訓練 (Keras 3 + PyTorch Backend)")
     print("=" * 70)
 
+    # 設定隨機種子以確保結果可重現
+    keras.utils.set_random_seed(232268)
+    
     os.makedirs("output/models", exist_ok=True)
     os.makedirs("output/result_images", exist_ok=True)
 
@@ -137,8 +140,8 @@ def main():
     print("=" * 70)
 
     ## 目前測得最強單一模型 (lr=0.00025, bs=20)
-    learning_rates = [0.00025, 0.00026, 0.00027]
-    batch_sizes = [16, 20, 24]
+    learning_rates = [0.00025]
+    batch_sizes = [20]
 
     keras_histories = {}
     keras_accuracies = {}
