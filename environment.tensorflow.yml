@@ -1,4 +1,4 @@
-name: wsl_ml_hw
+name: py313_tensorflow
 channels:
   - defaults
 dependencies:
@@ -108,4 +108,3 @@ dependencies:
       - urllib3==2.6.1
       - werkzeug==3.1.4
       - wrapt==2.0.1
-prefix: /home/finn/miniconda3/envs/wsl_ml_hw

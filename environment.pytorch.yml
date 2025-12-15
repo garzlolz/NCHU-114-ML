@@ -84,4 +84,3 @@ dependencies:
       - typing-extensions==4.15.0
       - tzdata==2025.2
       - umf==1.0.2
-prefix: C:\Users\garz8\.conda\envs\py312_keras_torch
