@@ -61,21 +61,20 @@ conda env update -f environment.pytorch.yml
 conda activate py312_keras_torch
 ```
 
-> **注意：PyTorch 安裝的特殊處理**
->
-> 基礎環境建立完成後，需手動執行 PyTorch 的安裝指令，並指定 CUDA 13.0 專用下載網址：
+> **注意：PyTorch Nightly Build 的特殊處理**
+> 由於 `environment.pytorch.yml` 中鎖定了特定的開發者版本，該版本不在預設的 PyPI 網站上，會導致 Conda 安裝失敗。
 >
 > **【手動安裝步驟】**
 >
-> 1.  確保環境已啟動: `conda activate py312_keras_torch`
-> 2.  執行指令安裝：
+> 1.  先移除 `environment.pytorch.yml` 中 `pip:` 區塊的 `torch`、`torchvision` 兩行，讓 Conda 完成基礎環境安裝。
+> 2.  進入環境後，**手動執行**安裝指令，並指定 PyTorch 的 CUDA 13.0 專用下載網址：
 >
 > <!-- end list -->
 
 > ```bash
+> # 在 (py312_keras_torch) 環境中執行
 > pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu130
 > ```
-
 #### 3\. 設定 Keras 後端
 
 程式碼已在訓練腳本 (`08_train_neural_network.pytorch.py`) 的最上方設定環境變數，將 Keras 3 的運算核心切換為 PyTorch：
@@ -91,10 +90,10 @@ os.environ["KERAS_BACKEND"] = "torch"
 
 請在 `(py312_keras_torch)` 環境中執行以下指令確認：
 
-| 驗證項目 | 指令 | 預期輸出 |
-| :--- | :--- | :--- |
-| **PyTorch CUDA** | `python -c "import torch; print(f'CUDA 可用: {torch.cuda.is_available()}')"` | `CUDA 可用: True` |
-| **Keras 後端** | `python -c "import keras; print(f'Keras Backend: {keras.backend.backend()}')"` | `Keras Backend: torch` |
+| 驗證項目         | 指令                                                                           | 預期輸出               |
+| :--------------- | :----------------------------------------------------------------------------- | :--------------------- |
+| **PyTorch CUDA** | `python -c "import torch; print(f'CUDA 可用: {torch.cuda.is_available()}')"`   | `CUDA 可用: True`      |
+| **Keras 後端**   | `python -c "import keras; print(f'Keras Backend: {keras.backend.backend()}')"` | `Keras Backend: torch` |
 
 #### 5\. 執行訓練
 

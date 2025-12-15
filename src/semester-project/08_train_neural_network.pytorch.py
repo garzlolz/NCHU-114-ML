@@ -95,7 +95,7 @@ def main():
     print("=" * 70)
 
     TARGET_SEED = 232268
-    print(f">>> 正在鎖定幸運種子: {TARGET_SEED}")
+    print(f">>> 最佳 random_seed: {TARGET_SEED}")
     keras.utils.set_random_seed(TARGET_SEED)
 
     os.makedirs("output/models", exist_ok=True)
