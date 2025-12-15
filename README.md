@@ -26,7 +26,7 @@
     │   ├── 07_train_traditional_model.py                   # 模型訓練：傳統機器學習 (RF, LR)
     │   ├── 08_train_neural_network.py                      # 模型訓練：神經網路 (TensorFlow/Keras)
     │   ├── 08_train_neural_network.pytorch.py              # 模型訓練：神經網路 (PyTorch Backend)
-    │   ├── 08_train_neural_network.pytorch.state_miner.py  # 模型訓練：PyTorch 找 best random state
+    │   ├── 08_train_neural_network.pytorch.seed_miner.py  # 模型訓練：PyTorch 找 best random seed
     │   ├── 09_compare_models.py                            # 模型評估：比較不同模型效能
     │   ├── 09_compare_models.pytorch.py                    # 模型評估：用 PyTorch 比較模型效能
     │   ├── 10_ensemble_prediction.pytorch.py               # 模型應用：集成學習預測

@@ -66,7 +66,6 @@ def main():
     all_times.update(trad_data["training_times"])
 
     # 2.2 處理 Keras 數據 (適應 Seed Mining 的結構)
-    # [關鍵修正 2] 這裡的 key 應該是 "best_seed"，不是 "best_state"
     best_lr = keras_data.get("best_lr")
     best_bs = keras_data.get("best_bs")
     best_seed = keras_data.get("best_seed", "Unknown")
@@ -85,13 +84,11 @@ def main():
         keras_time = keras_data["train_times"].get(key, 0)
     else:
         # 新版 Seed Miner 結構 - 嘗試從 CSV 讀取
-        # [關鍵修正 3] 檔名修正為 seed_mining_history.csv
         csv_path = "output/models/seed_mining_history.csv"
 
         if os.path.exists(csv_path):
             try:
                 df = pd.read_csv(csv_path)
-                # [關鍵修正 4] 欄位名稱修正為 "Seed"
                 # 確保 Seed 欄位格式一致 (轉字串比對)
                 seed_row = df[df["Seed"].astype(str) == str(best_seed)]
 
