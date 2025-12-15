@@ -80,9 +80,6 @@ dependencies:
       - sympy==1.14.0
       - tcmlib==1.4.1
       - tifffile==2025.10.16
-      - torch==2.10.0.dev20251211+cu130
-      - torchaudio==2.10.0.dev20251211+cu130
-      - torchvision==0.25.0.dev20251211+cu130
       - tqdm==4.67.1
       - typing-extensions==4.15.0
       - tzdata==2025.2

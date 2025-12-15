@@ -39,7 +39,7 @@ def main():
     # 將 description_detail 統一命名為 description
     if "description_detail" in df.columns and "description" not in df.columns:
         df["description"] = df["description_detail"]
-        print("✓ 已將 'description_detail' 欄位重新命名為 'description'")
+        print("已將 'description_detail' 欄位重新命名為 'description'")
 
     # 檢查欄位
     print(f"\n欄位名稱: {df.columns.tolist()}")
