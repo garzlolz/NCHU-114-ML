@@ -3,6 +3,7 @@ import pickle
 import time
 import random
 import csv
+import platform
 from datetime import datetime
 import numpy as np
 import matplotlib.pyplot as plt
@@ -73,7 +74,14 @@ def build_keras_model(input_dim, num_classes, learning_rate):
 
 
 def main():
-    print("開始執行獨立 seed 挖掘程式 (含 CSV 紀錄)...")
+    # 取得系統資訊
+    system_name = platform.system()
+    platform_info = f"{system_name}-{platform.machine()}"
+
+    print("=" * 70)
+    print("Seed Mining - 靜音模式 (所有紀錄寫入 CSV)")
+    print(f"執行平台: {platform_info}")
+    print("=" * 70)
 
     os.makedirs("output/models", exist_ok=True)
     os.makedirs("output/result_images", exist_ok=True)
@@ -101,7 +109,14 @@ def main():
     y_train_keras = to_categorical(y_train_smote, num_classes=len(le.classes_))
 
     results_file = "output/models/keras_results.pkl"
-    csv_log_file = "output/models/seed_mining_history.csv"
+
+    # 根據平台命名 CSV 檔案
+    if system_name == "Windows":
+        csv_all_file = "output/models/seed_mining_all_windows.csv"
+        csv_best_file = "output/models/seed_mining_best_windows.csv"
+    else:  # Linux (WSL)
+        csv_all_file = "output/models/seed_mining_all_linux.csv"
+        csv_best_file = "output/models/seed_mining_best_linux.csv"
 
     global_best_acc = 0.0
     best_seed = None
@@ -142,6 +157,8 @@ def main():
         29154,
         40390,
         7,
+        143212,
+        232268,
     }
 
     # 載入當前最佳紀錄
@@ -151,7 +168,7 @@ def main():
                 prev_results = pickle.load(f)
                 global_best_acc = prev_results.get("best_accuracy", 0)
                 best_seed = prev_results.get("best_seed", None)
-            print(f"目前最佳紀錄: seed {best_seed}, 準確率 {global_best_acc:.4f}")
+            print(f"目前最佳紀錄: seed={best_seed}, acc={global_best_acc:.4f}")
         except Exception:
             pass
 
@@ -159,10 +176,35 @@ def main():
     bs = 20
     current_session_seeds = set()
     iteration = 0
+    start_session_time = time.time()
+
+    # 初始化 CSV 檔案（如果不存在）
+    for csv_file in [csv_all_file, csv_best_file]:
+        if not os.path.isfile(csv_file):
+            with open(csv_file, mode="w", newline="", encoding="utf-8") as f:
+                writer = csv.writer(f)
+                writer.writerow(
+                    [
+                        "時間戳記",
+                        "Iteration",
+                        "Seed",
+                        "準確率",
+                        "訓練耗時(秒)",
+                        "LR",
+                        "Batch_Size",
+                        "平台",
+                        "是否最佳",
+                    ]
+                )
+
+    print(f"\n紀錄檔案:")
+    print(f"  所有測試: {csv_all_file}")
+    print(f"  最佳紀錄: {csv_best_file}")
+    print(f"\n開始挖掘... (每 50 次顯示一次進度)\n")
 
     try:
         while True:
-            # 隨機生成 seed (1 ~ 1,000,000)
+            # 隨機生成 seed
             seed = random.randint(1, 1000000)
 
             if (seed in banned_seeds) or (seed in current_session_seeds):
@@ -209,23 +251,53 @@ def main():
             preds = np.argmax(probs, axis=1)
             acc = accuracy_score(y_test, preds)
 
-            print(
-                f"第 {iteration} 次 | seed: {seed:<7} | 準確率: {acc:.4f} | 耗時: {elapsed_time:.1f}s"
-            )
+            is_best = acc > global_best_acc
+            timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-            # 若創新高則儲存並寫入 CSV
-            if acc > global_best_acc:
-                print(
-                    f">>> 發現新紀錄! seed {seed} ({acc:.4f}) 超越舊紀錄 ({global_best_acc:.4f})"
+            # 寫入所有測試紀錄
+            with open(csv_all_file, mode="a", newline="", encoding="utf-8") as f:
+                writer = csv.writer(f)
+                writer.writerow(
+                    [
+                        timestamp,
+                        iteration,
+                        seed,
+                        f"{acc:.6f}",
+                        f"{elapsed_time:.2f}",
+                        lr,
+                        bs,
+                        platform_info,
+                        "Yes" if is_best else "No",
+                    ]
                 )
 
+            # 若創新高則處理
+            if is_best:
+                old_best = global_best_acc
                 global_best_acc = acc
                 best_seed = seed
 
-                # 1. 儲存模型
+                # 寫入最佳紀錄
+                with open(csv_best_file, mode="a", newline="", encoding="utf-8") as f:
+                    writer = csv.writer(f)
+                    writer.writerow(
+                        [
+                            timestamp,
+                            iteration,
+                            seed,
+                            f"{acc:.6f}",
+                            f"{elapsed_time:.2f}",
+                            lr,
+                            bs,
+                            platform_info,
+                            "Yes",
+                        ]
+                    )
+
+                # 儲存模型
                 model.save("output/models/best_keras_model.keras")
 
-                # 2. 儲存 Pickle
+                # 儲存 Pickle
                 keras_results = {
                     "best_model": None,
                     "best_lr": lr,
@@ -238,43 +310,10 @@ def main():
                     "y_test": y_test,
                     "label_encoder": le,
                 }
-                with open("output/models/keras_results.pkl", "wb") as f:
+                with open(results_file, "wb") as f:
                     pickle.dump(keras_results, f)
 
-                # 3. 寫入 CSV 紀錄
-                file_exists = os.path.isfile(csv_log_file)
-                try:
-                    with open(
-                        csv_log_file, mode="a", newline="", encoding="utf-8"
-                    ) as f:
-                        writer = csv.writer(f)
-                        if not file_exists:
-                            writer.writerow(
-                                [
-                                    "時間戳記",
-                                    "seed",
-                                    "準確率",
-                                    "訓練耗時(秒)",
-                                    "LR",
-                                    "Batch_Size",
-                                ]
-                            )
-
-                        writer.writerow(
-                            [
-                                datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                                seed,
-                                f"{acc:.6f}",
-                                f"{elapsed_time:.2f}",
-                                lr,
-                                bs,
-                            ]
-                        )
-                    print(f"已寫入紀錄至 {csv_log_file}")
-                except Exception as e:
-                    print(f"CSV 寫入失敗: {e}")
-
-                # 4. 繪製混淆矩陣
+                # 繪製混淆矩陣
                 plt.figure(figsize=(12, 10))
                 cm = confusion_matrix(y_test, preds)
                 sns.heatmap(
@@ -285,13 +324,41 @@ def main():
                     xticklabels=le.classes_,
                     yticklabels=le.classes_,
                 )
-                plt.title(f"seed={seed}, Acc={acc:.4f}")
+                plt.title(f"{platform_info} - seed={seed}, Acc={acc:.4f}")
                 plt.tight_layout()
-                plt.savefig(f"output/result_images/best_confusion_matrix_{seed}.png")
+                plt.savefig(
+                    f"output/result_images/best_cm_{system_name.lower()}_{seed}.png"
+                )
                 plt.close()
 
+                # 只在找到新紀錄時 print
+                print(
+                    f"[{iteration:4d}] NEW BEST! seed={seed} | {old_best:.4f} -> {acc:.4f} (+{acc-old_best:.4f})"
+                )
+
+            # 每 50 次顯示進度
+            if iteration % 50 == 0:
+                session_time = time.time() - start_session_time
+                avg_time = session_time / iteration
+
+                print(f"[{iteration:4d}] 已測試 {iteration} 個 seed")
+                print(
+                    f"       運行: {session_time/3600:.2f}h | 平均: {avg_time:.1f}s/seed"
+                )
+                print(f"       最佳: seed={best_seed}, acc={global_best_acc:.4f}")
+                print()
+
     except KeyboardInterrupt:
-        print("\n使用者停止挖掘程序。")
+        print("\n\n使用者停止挖掘。")
+        session_time = time.time() - start_session_time
+        print(f"\n最終統計:")
+        print(f"  平台: {platform_info}")
+        print(f"  總測試: {iteration} 個 seed")
+        print(f"  總時間: {session_time/3600:.2f} 小時")
+        print(f"  最佳結果: seed={best_seed}, acc={global_best_acc:.4f}")
+        print(f"\n紀錄已儲存至:")
+        print(f"  - {csv_all_file}")
+        print(f"  - {csv_best_file}")
 
 
 if __name__ == "__main__":
