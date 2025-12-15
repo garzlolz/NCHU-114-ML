@@ -1,3 +1,4 @@
 *.keras
 *.npy
 *.pkl
+src/semester-project/utils/__pycache__/cross_platform_config.cpython-312.pyc
