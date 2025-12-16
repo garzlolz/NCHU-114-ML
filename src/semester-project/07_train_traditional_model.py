@@ -1,4 +1,3 @@
-import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 import pickle
@@ -6,15 +5,13 @@ import os
 import time
 
 from imblearn.over_sampling import SMOTE
-from collections import Counter
 
-from sklearn.model_selection import train_test_split, RandomizedSearchCV
+from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import classification_report, accuracy_score, confusion_matrix
+from sklearn.metrics import accuracy_score, confusion_matrix
 
 from scipy import sparse
-import matplotlib.font_manager as fm
 
 # 設定中文字體
 from utils.cross_platform_config import set_matplotlib_font
@@ -29,7 +26,7 @@ plt.rcParams["axes.unicode_minus"] = False
 
 def main():
     print("=" * 70)
-    print("傳統機器學習模型訓練 (進階優化版 - Hyperparameter Tuning)")
+    print("傳統機器學習模型訓練")
     print("=" * 70)
 
     # 建立輸出資料夾
@@ -77,83 +74,56 @@ def main():
 
     print(f"SMOTE 後訓練集樣本數: {X_train_smote.shape[0]}")
 
-    # ==================== 4. 定義參數網格與模型 ====================
-    print("\n步驟 4: 定義超參數搜尋空間")
-
-    # Random Forest 參數空間
-    rf_params = {
-        "n_estimators": [100, 300, 500],
-        "max_depth": [None, 20, 50, 100],
-        "min_samples_split": [2, 5, 10],
-        "min_samples_leaf": [1, 2, 4],
-        "max_features": ["sqrt", "log2"],
-    }
-
-    # Logistic Regression 參數空間
-    lr_params = {
-        "C": [0.01, 0.1, 1, 10, 100],  # 正則化強度
-        "solver": ["liblinear", "lbfgs"],  # 優化演算法
-        "max_iter": [1000],  # 確保收斂
-    }
-
-    models_config = {
-        "Random Forest": {
-            "model": RandomForestClassifier(random_state=42, n_jobs=-1),
-            "params": rf_params,
-            "n_iter": 10,  # 隨機嘗試 10 種組合
-        },
-        "Logistic Regression": {
-            "model": LogisticRegression(random_state=42, n_jobs=-1),
-            "params": lr_params,
-            "n_iter": 5,  # 隨機嘗試 5 種組合
-        },
-    }
-
-    # ==================== 5. 執行優化訓練 ====================
+    # ==================== 4. 定義最佳模型 ====================
     print("\n" + "=" * 70)
-    print("步驟 5: 開始 RandomizedSearchCV 優化訓練")
+    print("步驟 4: 使用最佳參數建立模型")
     print("=" * 70)
+
+    # 根據您提供的 Log 直接填入最佳參數
+    models = {
+        "Random Forest": RandomForestClassifier(
+            n_estimators=100,
+            min_samples_split=5,
+            min_samples_leaf=1,
+            max_features="sqrt",
+            max_depth=50,
+            random_state=42,
+            n_jobs=-1,
+        ),
+        "Logistic Regression": LogisticRegression(
+            solver="lbfgs", max_iter=1000, C=1, random_state=42, n_jobs=-1
+        ),
+    }
+
+    # ==================== 5. 執行訓練 ====================
+    print("步驟 5: 開始訓練模型")
 
     results = {}
     training_times = {}
     predictions = {}
-    best_estimators = {}  # 儲存訓練好的最佳模型物件
+    best_estimators = {}  # 為了保持格式一致，這裡直接存模型
 
-    for name, config in models_config.items():
-        print(f"\n正在優化訓練: {name} ...")
+    for name, model in models.items():
+        print(f"\n正在訓練: {name} (Best Params) ...")
         start_time = time.time()
 
-        # 建立隨機搜尋物件
-        search = RandomizedSearchCV(
-            estimator=config["model"],
-            param_distributions=config["params"],
-            n_iter=config["n_iter"],
-            scoring="accuracy",
-            cv=3,  # 3-Fold 交叉驗證
-            verbose=1,
-            random_state=42,
-            n_jobs=-1,  # 使用所有 CPU 核心
-        )
-
-        # 開始擬合
-        search.fit(X_train_smote, y_train_smote)
+        # 直接訓練
+        model.fit(X_train_smote, y_train_smote)
 
         # 記錄時間
         elapsed_time = time.time() - start_time
         training_times[name] = elapsed_time
 
-        # 取得最佳模型
-        best_model = search.best_estimator_
-        best_estimators[name] = best_model
+        # 儲存模型
+        best_estimators[name] = model
 
         # 預測
-        y_pred = best_model.predict(X_test)
+        y_pred = model.predict(X_test)
         acc = accuracy_score(y_test, y_pred)
 
         results[name] = acc
         predictions[name] = y_pred
 
-        print(f" -> 最佳參數: {search.best_params_}")
         print(f" -> 測試集準確率: {acc:.2%}")
         print(f" -> 耗時: {elapsed_time:.2f} 秒")
 
@@ -161,9 +131,8 @@ def main():
     print("\n" + "=" * 70)
     print("步驟 6: 儲存訓練結果")
 
-    # 這裡要注意: 必須儲存 best_estimators (已經 fit 過的最佳模型)
     traditional_results = {
-        "models": best_estimators,  # 儲存最佳模型實體
+        "models": best_estimators,
         "results": results,
         "training_times": training_times,
         "predictions": predictions,
@@ -174,11 +143,10 @@ def main():
         "label_encoder": le,
     }
 
-    # 覆蓋舊檔案，確保後續比較程式讀到的是最強版本
     model_file = "output/models/traditional_models.pkl"
     with open(model_file, "wb") as f:
         pickle.dump(traditional_results, f)
-    print(f"優化後的模型結果已儲存到 {model_file}")
+    print(f"最佳模型結果已儲存到 {model_file}")
 
     # ==================== 7. 生成混淆矩陣 ====================
     print("\n步驟 7: 更新混淆矩陣圖表")
@@ -196,9 +164,7 @@ def main():
             yticklabels=le.classes_,
             ax=axes[idx],
         )
-        axes[idx].set_title(
-            f"{name} (Optimized)\nAcc: {results[name]:.2%}", fontsize=14
-        )
+        axes[idx].set_title(f"{name} (Final)\nAcc: {results[name]:.2%}", fontsize=14)
         axes[idx].set_xlabel("Predicted")
         axes[idx].set_ylabel("Actual")
 
