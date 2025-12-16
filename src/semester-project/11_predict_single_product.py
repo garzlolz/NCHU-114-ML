@@ -140,7 +140,7 @@ class ProductClassifier:
         except Exception as e:
             print(f"[ERROR] 圖片特徵提取失敗: {e}")
             # 返回零向量
-            return np.zeros(3108)
+            return np.zeros(720)
 
     def prepare_features(
         self, brand="", name="", description="", image_path=None, price=0
@@ -170,7 +170,7 @@ class ProductClassifier:
             img_features = self.extract_image_features(image_path)
         else:
             print("[WARNING] 未提供圖片或圖片不存在，使用零向量")
-            img_features = np.zeros(3108)
+            img_features = np.zeros(720)
 
         # 標準化圖片特徵
         img_features_scaled = self.scaler_img.transform(img_features.reshape(1, -1))

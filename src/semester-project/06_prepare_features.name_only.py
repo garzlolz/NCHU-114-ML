@@ -118,8 +118,7 @@ def main():
     X = hstack(
         [
             X_text_name,  # 2296 維
-            # X_text_desc,                      # ← 註解掉
-            csr_matrix(image_features_scaled),  # 3108 維
+            csr_matrix(image_features_scaled),  # 720 維
             csr_matrix(X_price),  # 1 維
         ]
     )
