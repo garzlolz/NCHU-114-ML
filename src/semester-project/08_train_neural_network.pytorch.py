@@ -94,7 +94,7 @@ def main():
     print("神經網路模型訓練 (Keras 3 + PyTorch Backend)")
     print("=" * 70)
 
-    TARGET_SEED = 232268
+    TARGET_SEED = 821407
     print(f">>> 最佳 random_seed: {TARGET_SEED}")
     keras.utils.set_random_seed(TARGET_SEED)
 

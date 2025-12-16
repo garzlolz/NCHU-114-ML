@@ -73,6 +73,26 @@ def build_keras_model(input_dim, num_classes, learning_rate):
     return model
 
 
+def load_tested_seeds_from_csv(csv_file):
+    """從 CSV 讀取已測試過的 seed"""
+    tested_seeds = set()
+
+    if not os.path.isfile(csv_file):
+        return tested_seeds
+
+    try:
+        with open(csv_file, mode="r", encoding="utf-8") as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                seed = int(row["Seed"])
+                tested_seeds.add(seed)
+        print(f"從 {csv_file} 載入 {len(tested_seeds)} 個已測試的 seed")
+    except Exception as e:
+        print(f"讀取 CSV 時發生錯誤: {e}")
+
+    return tested_seeds
+
+
 def main():
     # 取得系統資訊
     system_name = platform.system()
@@ -121,45 +141,20 @@ def main():
     global_best_acc = 0.0
     best_seed = None
 
-    # 已測試過的 seed 排除清單
-    banned_seeds = {
-        47742,
-        38847,
-        58224,
-        55580,
-        31628,
-        69152,
-        1246,
-        92001,
-        57760,
-        54904,
-        36345,
-        51701,
-        33310,
-        14521,
-        97699,
-        78527,
-        65113,
-        68705,
-        46412,
-        45515,
-        3714,
-        46915,
-        56079,
-        21867,
-        2280,
-        78069,
-        15192,
-        73876,
-        1106,
-        14885,
-        53044,
-        29154,
-        40390,
-        7,
-        143212,
-        232268,
-    }
+    # 從 CSV 載入已測試過的 seed
+    print("\n讀取已測試的 seed...")
+    tested_seeds = load_tested_seeds_from_csv(csv_all_file)
+
+    # 也讀取其他平台的 CSV（避免跨平台重複測試）
+    if system_name == "Windows":
+        other_csv = "output/models/seed_mining_all_linux.csv"
+    else:
+        other_csv = "output/models/seed_mining_all_windows.csv"
+
+    if os.path.isfile(other_csv):
+        other_seeds = load_tested_seeds_from_csv(other_csv)
+        tested_seeds.update(other_seeds)
+        print(f"合併兩平台後，共 {len(tested_seeds)} 個已測試的 seed")
 
     # 載入當前最佳紀錄
     if os.path.exists(results_file):
@@ -174,7 +169,6 @@ def main():
 
     lr = 0.00025
     bs = 20
-    current_session_seeds = set()
     iteration = 0
     start_session_time = time.time()
 
@@ -200,17 +194,28 @@ def main():
     print(f"\n紀錄檔案:")
     print(f"  所有測試: {csv_all_file}")
     print(f"  最佳紀錄: {csv_best_file}")
-    print(f"\n開始挖掘... (每 50 次顯示一次進度)\n")
+    print(f"\n開始挖掘... (每 50 次顯示一次進度)")
+    print(f"已排除 {len(tested_seeds)} 個測試過的 seed\n")
+
+    skipped_count = 0  # 統計跳過的次數
 
     try:
         while True:
             # 隨機生成 seed
             seed = random.randint(1, 1000000)
 
-            if (seed in banned_seeds) or (seed in current_session_seeds):
+            # 檢查是否已測試過
+            if seed in tested_seeds:
+                skipped_count += 1
+                # 每跳過 1000 次顯示一次（避免 seed 空間快用完時卡住）
+                if skipped_count % 1000 == 0:
+                    print(
+                        f"[警告] 已跳過 {skipped_count} 個重複的 seed，可能需要擴大 seed 範圍"
+                    )
                 continue
 
-            current_session_seeds.add(seed)
+            # 加入已測試集合（避免本次 session 內重複）
+            tested_seeds.add(seed)
             iteration += 1
 
             keras.utils.set_random_seed(seed)
@@ -341,7 +346,9 @@ def main():
                 session_time = time.time() - start_session_time
                 avg_time = session_time / iteration
 
-                print(f"[{iteration:4d}] 已測試 {iteration} 個 seed")
+                print(
+                    f"[{iteration:4d}] 已測試 {iteration} 個 seed (跳過 {skipped_count} 個重複)"
+                )
                 print(
                     f"       運行: {session_time/3600:.2f}h | 平均: {avg_time:.1f}s/seed"
                 )
@@ -354,6 +361,7 @@ def main():
         print(f"\n最終統計:")
         print(f"  平台: {platform_info}")
         print(f"  總測試: {iteration} 個 seed")
+        print(f"  跳過重複: {skipped_count} 個")
         print(f"  總時間: {session_time/3600:.2f} 小時")
         print(f"  最佳結果: seed={best_seed}, acc={global_best_acc:.4f}")
         print(f"\n紀錄已儲存至:")
