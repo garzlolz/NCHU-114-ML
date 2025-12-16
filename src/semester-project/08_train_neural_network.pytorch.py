@@ -42,7 +42,7 @@ print(f"目前使用的 Keras 後端: {keras.backend.backend()}")
 def build_keras_model(input_dim, num_classes, learning_rate):
     """
     建立 Keras 神經網路模型 (PyTorch Backend)。
-    架構：512 -> 256 -> 128 -> 64 -> Softmax
+    架構：1024 -> 512 -> 256 -> 128 -> 64 -> Softmax
     """
     inputs = Input(shape=(input_dim,), name="input_features")
 
