@@ -11,6 +11,7 @@ import pandas as pd
 import keras
 
 # 設定中文字體
+
 from utils.cross_platform_config import set_matplotlib_font
 
 font_name = set_matplotlib_font()
@@ -20,11 +21,10 @@ plt.rcParams["font.family"] = "sans-serif"
 plt.rcParams["font.sans-serif"] = [font_name]
 plt.rcParams["axes.unicode_minus"] = False
 
-
 def main():
-    print("=" * 70)
-    print("模型比較分析 (整合 Seed Mining 結果)")
-    print("=" * 70)
+print("=" _ 70)
+print("模型比較分析 (整合 Seed Mining 結果)")
+print("=" _ 70)
 
     # 建立輸出資料夾
     os.makedirs("output/models", exist_ok=True)
@@ -66,7 +66,6 @@ def main():
     all_times.update(trad_data["training_times"])
 
     # 2.2 處理 Keras 數據 (適應 Seed Mining 的結構)
-    # [關鍵修正 2] 這裡的 key 應該是 "best_seed"，不是 "best_state"
     best_lr = keras_data.get("best_lr")
     best_bs = keras_data.get("best_bs")
     best_seed = keras_data.get("best_seed", "Unknown")
@@ -263,6 +262,5 @@ def main():
 
     print(f"\n最佳模型整合資訊已儲存至: {best_model_file}")
 
-
-if __name__ == "__main__":
-    main()
+if **name** == "**main**":
+main()

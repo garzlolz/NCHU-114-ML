@@ -73,7 +73,7 @@ def build_keras_model(input_dim, num_classes, learning_rate):
 
 
 def main():
-    print("開始執行獨立 State 挖掘程式 (含 CSV 紀錄)...")
+    print("開始執行獨立 seed 挖掘程式 (含 CSV 紀錄)...")
 
     os.makedirs("output/models", exist_ok=True)
     os.makedirs("output/result_images", exist_ok=True)
@@ -101,13 +101,13 @@ def main():
     y_train_keras = to_categorical(y_train_smote, num_classes=len(le.classes_))
 
     results_file = "output/models/keras_results.pkl"
-    csv_log_file = "output/models/state_mining_history.csv"
+    csv_log_file = "output/models/seed_mining_history.csv"
 
     global_best_acc = 0.0
-    best_state = None
+    best_seed = None
 
-    # 已測試過的 State 排除清單
-    banned_states = {
+    # 已測試過的 seed 排除清單
+    banned_seeds = {
         47742,
         38847,
         58224,
@@ -150,34 +150,34 @@ def main():
             with open(results_file, "rb") as f:
                 prev_results = pickle.load(f)
                 global_best_acc = prev_results.get("best_accuracy", 0)
-                best_state = prev_results.get("best_state", None)
-            print(f"目前最佳紀錄: State {best_state}, 準確率 {global_best_acc:.4f}")
+                best_seed = prev_results.get("best_seed", None)
+            print(f"目前最佳紀錄: seed {best_seed}, 準確率 {global_best_acc:.4f}")
         except Exception:
             pass
 
     lr = 0.00025
     bs = 20
-    current_session_states = set()
+    current_session_seeds = set()
     iteration = 0
 
     try:
         while True:
-            # 隨機生成 State (1 ~ 1,000,000)
-            state = random.randint(1, 1000000)
+            # 隨機生成 seed (1 ~ 1,000,000)
+            seed = random.randint(1, 1000000)
 
-            if (state in banned_states) or (state in current_session_states):
+            if (seed in banned_seeds) or (seed in current_session_seeds):
                 continue
 
-            current_session_states.add(state)
+            current_session_seeds.add(seed)
             iteration += 1
 
-            keras.utils.set_random_seed(state)
+            keras.utils.set_random_seed(seed)
 
             X_train_sub, X_valid, y_train_sub, y_valid = train_test_split(
                 X_train_smote,
                 y_train_keras,
                 test_size=0.1,
-                random_state=state,
+                random_state=seed,
                 stratify=y_train_smote,
             )
 
@@ -210,17 +210,17 @@ def main():
             acc = accuracy_score(y_test, preds)
 
             print(
-                f"第 {iteration} 次 | State: {state:<7} | 準確率: {acc:.4f} | 耗時: {elapsed_time:.1f}s"
+                f"第 {iteration} 次 | seed: {seed:<7} | 準確率: {acc:.4f} | 耗時: {elapsed_time:.1f}s"
             )
 
             # 若創新高則儲存並寫入 CSV
             if acc > global_best_acc:
                 print(
-                    f">>> 發現新紀錄! State {state} ({acc:.4f}) 超越舊紀錄 ({global_best_acc:.4f})"
+                    f">>> 發現新紀錄! seed {seed} ({acc:.4f}) 超越舊紀錄 ({global_best_acc:.4f})"
                 )
 
                 global_best_acc = acc
-                best_state = state
+                best_seed = seed
 
                 # 1. 儲存模型
                 model.save("output/models/best_keras_model.keras")
@@ -230,7 +230,7 @@ def main():
                     "best_model": None,
                     "best_lr": lr,
                     "best_bs": bs,
-                    "best_state": state,
+                    "best_seed": seed,
                     "best_accuracy": acc,
                     "best_y_pred": preds,
                     "best_history": history,
@@ -252,7 +252,7 @@ def main():
                             writer.writerow(
                                 [
                                     "時間戳記",
-                                    "State",
+                                    "seed",
                                     "準確率",
                                     "訓練耗時(秒)",
                                     "LR",
@@ -263,7 +263,7 @@ def main():
                         writer.writerow(
                             [
                                 datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                                state,
+                                seed,
                                 f"{acc:.6f}",
                                 f"{elapsed_time:.2f}",
                                 lr,
@@ -285,9 +285,9 @@ def main():
                     xticklabels=le.classes_,
                     yticklabels=le.classes_,
                 )
-                plt.title(f"State={state}, Acc={acc:.4f}")
+                plt.title(f"seed={seed}, Acc={acc:.4f}")
                 plt.tight_layout()
-                plt.savefig(f"output/result_images/best_confusion_matrix_{state}.png")
+                plt.savefig(f"output/result_images/best_confusion_matrix_{seed}.png")
                 plt.close()
 
     except KeyboardInterrupt:
