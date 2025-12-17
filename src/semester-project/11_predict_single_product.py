@@ -126,7 +126,7 @@ class ProductClassifier:
             hog_features = hog(
                 img_gray,
                 orientations=9,
-                pixels_per_cell=(50, 50),
+                pixels_per_cell=(100, 100),
                 cells_per_block=(2, 2),
                 block_norm="L2-Hys",
                 feature_vector=True,
@@ -318,5 +318,163 @@ def main():
         )
 
 
+def predict_from_csv(csv_path, output_path="output/predictions_result.csv"):
+    """
+    從 CSV 讀取商品資料並進行批次預測
+
+    Args:
+        csv_path: 輸入 CSV 檔案路徑
+        output_path: 輸出結果 CSV 檔案路徑
+
+    CSV 必要欄位:
+        - brand (品牌)
+        - name (商品名稱)
+        - description 或 description_detail (商品描述)
+        - price (價格，可選，預設0)
+        - image_path (圖片路徑，可選)
+    """
+    import pandas as pd
+    from tqdm import tqdm
+
+    print("=" * 70)
+    print("批次預測：從 CSV 讀取商品資料")
+    print("=" * 70)
+
+    # 讀取 CSV
+    if not os.path.exists(csv_path):
+        print(f"錯誤: 找不到檔案 {csv_path}")
+        return
+
+    df = pd.read_csv(csv_path, encoding="utf-8-sig")
+    print(f"\n讀取商品數量: {len(df)}")
+    print(f"欄位: {df.columns.tolist()}")
+
+    # 處理空值（與 06_prepare_features.py 相同方式）
+    df["brand"] = df["brand"].fillna("")
+    df["name"] = df["name"].fillna("")
+
+    # 描述欄位處理
+    if "description_detail" in df.columns:
+        df["description"] = df["description_detail"].fillna("")
+    elif "description" in df.columns:
+        df["description"] = df["description"].fillna("")
+    else:
+        df["description"] = ""
+
+    # 價格處理
+    df["price"] = df["price"].fillna(0)
+
+    # 圖片路徑處理
+    df["image_path"] = df["image_path"].fillna("")
+
+    # 初始化預測器
+    classifier = ProductClassifier()
+
+    # 準備結果列表
+    results = []
+
+    # 批次預測
+    print("\n開始批次預測...")
+    for idx, row in tqdm(df.iterrows(), total=len(df), desc="預測進度"):
+        brand = row["brand"]
+        name = row["name"]
+        description = row["description"]
+        price = float(row["price"]) if row["price"] else 0
+
+        # 圖片路徑處理：處理相對路徑和絕對路徑
+        image_path_raw = row["image_path"].strip() if row["image_path"] else ""
+
+        if image_path_raw:
+            # 檢查是否為絕對路徑
+            if os.path.isabs(image_path_raw):
+                image_path = image_path_raw
+            else:
+                # 相對路徑：相對於程式執行位置
+                image_path = os.path.abspath(image_path_raw)
+
+            # 驗證圖片是否存在
+            if not os.path.exists(image_path):
+                print(f"\n[警告] 圖片不存在: {image_path}")
+                print(f"  原始路徑: {image_path_raw}")
+                print(f"  當前工作目錄: {os.getcwd()}")
+                image_path = None
+        else:
+            image_path = None
+
+        # 進行預測（關閉詳細輸出）
+        try:
+            pred, conf, probs = classifier.predict(
+                brand=brand,
+                name=name,
+                description=description,
+                image_path=image_path,
+                price=price,
+                show_probabilities=False,
+            )
+
+            # 儲存結果
+            results.append(
+                {
+                    "brand": brand,
+                    "name": name,
+                    "predicted_category": pred,
+                    "confidence": conf,
+                    "top2_category": classifier.label_encoder.classes_[
+                        np.argsort(probs)[-2]
+                    ],
+                    "top2_confidence": np.sort(probs)[-2],
+                }
+            )
+
+        except Exception as e:
+            print(f"\n預測失敗 (商品: {brand} {name}): {e}")
+            import traceback
+
+            traceback.print_exc()
+
+            results.append(
+                {
+                    "brand": brand,
+                    "name": name,
+                    "predicted_category": "ERROR",
+                    "confidence": 0.0,
+                    "top2_category": "",
+                    "top2_confidence": 0.0,
+                }
+            )
+
+    # 轉換為 DataFrame
+    result_df = pd.DataFrame(results)
+
+    # 儲存結果
+    result_df.to_csv(output_path, index=False, encoding="utf-8-sig")
+    print(f"\n[完成] 預測完成！結果已儲存至: {output_path}")
+
+    # 統計資訊
+    print("\n" + "=" * 70)
+    print("預測結果統計")
+    print("=" * 70)
+    print(f"總預測數量: {len(result_df)}")
+
+    if len(result_df) > 0:
+        print(f"平均信心分數: {result_df['confidence'].mean():.2%}")
+
+    print(f"\n各類別預測數量:")
+    print(result_df["predicted_category"].value_counts())
+
+    print(f"\n信心分數分佈:")
+    print(f"  高信心 (>90%): {(result_df['confidence'] > 0.90).sum()} 筆")
+    print(
+        f"  中信心 (60-90%): {((result_df['confidence'] >= 0.60) & (result_df['confidence'] <= 0.90)).sum()} 筆"
+    )
+    print(f"  低信心 (<60%): {(result_df['confidence'] < 0.60).sum()} 筆")
+
+    return result_df
+
+
 if __name__ == "__main__":
-    main()
+
+    predict_from_csv(
+        csv_path="input/11_predict_single_product.csv",
+        output_path="output/predictions_result.csv",
+    )
