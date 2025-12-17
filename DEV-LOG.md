@@ -28,9 +28,9 @@
 
 - **架構對齊**：將 Grid Search 使用的模型架構與訓練腳本統一。原本 Grid Search 腳本使用較大的 1024 神經元層，現已統一縮減為 `512 -> 256 -> 128 -> 64`，以符合資料集規模並減少過擬合。
 - **Label Smoothing A/B 測試**：
-- **方案 A（Smoothing=0.1）**：測試準確率 85.16%，Val Loss 0.8536。模型對預測較保守，泛化能力微幅提升。
-- **方案 B（無 Smoothing）**：測試準確率 84.75%，Val Loss 0.5709。模型訓練較快但存在過度自信（Over-confidence）問題。
-- **決策**：雖然方案 A 的 Loss 數值因熵值墊高而較高，但其測試準確率較高（+0.41%），最終選擇保留 Label Smoothing 以提升泛化能力。
+- **方案 A（Smoothing=0.1）**：測試準確率下降至 **77%**。顯示在此資料集上，平滑化標籤導致模型對類別邊界的判斷變得模糊，反而降低了辨識能力。
+- **方案 B（無 Smoothing）**：測試準確率維持在 **84.75%**。雖然模型存在過度自信（Over-confidence）的理論風險，但在實際分類準確度上表現顯著較優。
+- **決策**：放棄 Label Smoothing，維持使用標準的 Categorical Crossentropy，優先確保分類準確率。
 
 **文件化**
 
@@ -156,8 +156,8 @@
 - **欄位語意**：重新定義 CSV 欄位，確認 `description` 為主要品名，`description_detail` 為規格描述。
 - **特徵工程**：
 - 文字：Brand+Name (TF-IDF 500 維) + Description (TF-IDF 500 維)。
-- 圖片：提取色彩與 HOG 特徵共 3012 維。
-- 總維度：約 4013 維。
+- 圖片：提取色彩與 HOG 特徵共 576 維。
+- 總維度：約 720 維。
 
 - **字型設定**：統一使用 `Noto Sans CJK JP` 以解決 Matplotlib 中文亂碼問題。
 - **Batch Size 實驗**：初步比較 Batch Size 32/64/128，確認 Batch Size 32 表現最佳（74.69%）。
