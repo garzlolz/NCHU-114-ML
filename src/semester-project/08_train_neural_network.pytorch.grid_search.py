@@ -40,7 +40,6 @@ def build_keras_model(input_dim, num_classes, learning_rate, dropout_list):
     架構：512 -> 256 -> 128 -> 64 -> Softmax
     dropout_list: [d0, d1, d2, d3] (共 4 個參數)
     """
-    # 解包 4 個 dropout 參數
     if len(dropout_list) != 4:
         raise ValueError(f"Expected 4 dropout values, got {len(dropout_list)}")
 
@@ -147,32 +146,111 @@ def main():
     # 轉換驗證集標籤為 one-hot
     y_valid_keras = to_categorical(y_valid, num_classes=num_classes)
 
-    lr_list = [0.0001, 0.00015, 0.0002, 0.00025, 0.0003, 0.0004]
-
-    bs_list = [16, 20, 24, 28, 32, 40]
-
-    dropout_grid = [
-        [0.4, 0.35, 0.3, 0.25],
-        [0.3, 0.25, 0.2, 0.15],
-        [0.5, 0.45, 0.4, 0.35],
-        [0.35, 0.35, 0.35, 0.35],
+    # 1. Learning Rate: 12 values (0.00005 ~ 0.0004)
+    lr_list = [
+        0.00005,
+        0.00008,
+        0.0001,
+        0.00012,
+        0.00015,
+        0.00018,
+        0.0002,
+        0.00022,
+        0.00025,
+        0.00028,
+        0.0003,
+        0.0004,
     ]
 
-    param_combinations = list(
+    # 2. Batch Size: 9 values
+    bs_list = [16, 18, 20, 22, 24, 26, 28, 32, 48]
+
+    # 3. Dropout Configs: 10 variations
+    dropout_grid = [
+        [0.3, 0.25, 0.2, 0.15],
+        [0.35, 0.3, 0.25, 0.2],
+        [0.4, 0.35, 0.3, 0.25],  # Standard (Baseline)
+        [0.45, 0.4, 0.35, 0.3],
+        [0.5, 0.45, 0.4, 0.35],
+        [0.55, 0.5, 0.45, 0.4],
+        [0.4, 0.4, 0.4, 0.4],
+        [0.3, 0.3, 0.3, 0.3],
+        [0.5, 0.3, 0.3, 0.1],
+        [0.2, 0.3, 0.4, 0.5],
+    ]
+
+    # 產生「所有」可能的組合
+    all_combinations = list(
         itertools.product(lr_list, bs_list, range(len(dropout_grid)))
     )
-    total_combos = len(param_combinations)
+    total_original_combos = len(all_combinations)
 
-    print("\nGrid Search 設定：")
-    print(f"  learning_rate 選項: {lr_list}")
-    print(f"  batch_size 選項  : {bs_list}")
-    print(f"  dropout 組數    : {len(dropout_grid)} 組")
-    for i, d in enumerate(dropout_grid):
-        print(f"    ID {i}: {d}")
-    print(f"  總組合數        : {total_combos}")
+    # ================= [斷點續練邏輯 START] =================
+    existing_combinations = set()
+    global_best_acc = 0.0
+
+    if os.path.isfile(csv_all_file):
+        print(f"\n檢測到歷史紀錄檔: {csv_all_file}")
+        print("正在讀取已完成的進度與最佳準確率...")
+        try:
+            with open(csv_all_file, mode="r", newline="", encoding="utf-8") as f:
+                reader = csv.DictReader(f)
+                for row in reader:
+                    try:
+                        # 讀取參數以進行排除
+                        r_lr = float(row["Learning_Rate"])
+                        r_bs = int(row["Batch_Size"])
+                        r_did = int(row["Dropout_Config_ID"])
+                        r_acc = float(row["Accuracy"])
+
+                        # 加入集合 (Tuple 結構)
+                        existing_combinations.add((r_lr, r_bs, r_did))
+
+                        # 更新目前的最佳紀錄，避免重新跑時以為是新的最佳
+                        if r_acc > global_best_acc:
+                            global_best_acc = r_acc
+
+                    except (ValueError, KeyError) as e:
+                        # 略過解析錯誤的行
+                        continue
+        except Exception as e:
+            print(f"讀取 CSV 時發生警告 (將重新開始): {e}")
+
+    # 過濾掉已經跑過的組合
+    param_combinations = []
+    for combo in all_combinations:
+        lr, bs, d_id = combo
+        # 檢查是否存在於已完成集合中
+        # 為了避免浮點數精度問題 (如 0.0001 vs 0.000100001)，做一個簡單的容差比對
+        is_done = False
+        if (lr, bs, d_id) in existing_combinations:
+            is_done = True
+        else:
+            # 備用檢查：如果直接比對失敗，檢查數值接近度
+            for e_lr, e_bs, e_did in existing_combinations:
+                if e_bs == bs and e_did == d_id and abs(e_lr - lr) < 1e-9:
+                    is_done = True
+                    break
+
+        if not is_done:
+            param_combinations.append(combo)
+
+    skipped_count = total_original_combos - len(param_combinations)
+    total_combos_to_run = len(param_combinations)
+
+    print("\nGrid Search 進度確認：")
+    print(f"  原始總組合數 : {total_original_combos}")
+    print(f"  已執行過組合 : {skipped_count}")
+    print(f"  目前歷史最佳 : {global_best_acc:.6f}")
+    print(f"  剩餘待執行   : {total_combos_to_run}")
     print("=" * 70)
 
-    # 準備 CSV
+    if total_combos_to_run == 0:
+        print("所有組合皆已執行完畢！程式結束。")
+        return
+    # ================= [斷點續練邏輯 END] =================
+
+    # 準備 CSV (如果檔案不存在才寫入 header)
     if not os.path.isfile(csv_all_file):
         with open(csv_all_file, mode="w", newline="", encoding="utf-8") as f:
             writer = csv.writer(f)
@@ -188,19 +266,21 @@ def main():
                     "平台",
                 ]
             )
-        print(f"已建立紀錄檔: {csv_all_file}")
+        print(f"已建立新紀錄檔: {csv_all_file}")
 
-    global_best_acc = 0.0
     best_params = None
     best_preds = None
     best_history = None
 
     start_session_time = time.time()
 
-    for idx, (lr, bs, d_id) in enumerate(param_combinations, start=1):
+    # idx 從 skipped_count + 1 開始顯示，這樣 Log 才會接續 (例如 [101/500])
+    start_idx = skipped_count + 1
+
+    for idx, (lr, bs, d_id) in enumerate(param_combinations, start=start_idx):
         dropouts = dropout_grid[d_id]
         print(
-            f"\n[{idx:03d}/{total_combos}] 開始訓練 - "
+            f"\n[{idx:03d}/{total_original_combos}] 開始訓練 - "
             f"lr={lr}, bs={bs}, dropout={dropouts}"
         )
 
@@ -222,7 +302,6 @@ def main():
             monitor="val_loss", factor=0.5, patience=5, min_lr=1e-6, verbose=0
         )
 
-        # 使用與單一訓練腳本相似的 patience 設定
         early_stopping = EarlyStopping(
             monitor="val_loss",
             patience=10,
@@ -232,7 +311,6 @@ def main():
 
         start_time = time.time()
 
-        # Epochs 設定為 100，依靠 Early Stopping 提早結束
         history = model.fit(
             X_train_smote,
             y_train_keras,
@@ -327,9 +405,9 @@ def main():
             plt.savefig("output/result_images/keras_best_confusion_matrix.png")
             plt.close()
 
-    # 全部跑完後，畫訓練曲線
+    # 全部跑完後，畫訓練曲線 (只有當次執行有產生更好的結果時才會有 best_history)
     if best_history is not None:
-        print("\n繪製最佳組合的訓練曲線...")
+        print("\n繪製本次最佳組合的訓練曲線...")
 
         # 取得 history dict
         h_dict = best_history.history
@@ -359,8 +437,8 @@ def main():
 
         session_time = time.time() - start_session_time
         print("\nGrid Search 完成！")
-        print(f"  總組合數: {total_combos}")
-        print(f"  總耗時  : {session_time/3600:.2f} 小時")
+        print(f"  本次執行數: {total_combos_to_run}")
+        print(f"  總耗時    : {session_time/3600:.2f} 小時")
         print(
             "  最佳組合: "
             f"lr={best_params['learning_rate']}, "
@@ -371,7 +449,7 @@ def main():
         print(f"  紀錄檔案: {csv_all_file}")
         print(f"  模型 / 結果: best_keras_model.keras, keras_results.pkl")
     else:
-        print("\nGrid Search 未找到任何有效結果，請檢查設定。")
+        print("\n本次執行未發現比歷史紀錄更好的模型，或無須執行任何訓練。")
 
 
 if __name__ == "__main__":

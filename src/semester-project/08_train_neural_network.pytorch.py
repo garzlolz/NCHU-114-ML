@@ -47,25 +47,25 @@ def build_keras_model(input_dim, num_classes, learning_rate):
     架構： 512 -> 256 -> 128 -> 64 -> Softmax
     """
     inputs = Input(shape=(input_dim,), name="input_features")
-    # 第一層: 1024 → 適度減少至 512
+    # 第一層: 512
     x = Dense(512, name="dense_512")(inputs)
     x = BatchNormalization(name="batchnorm_0")(x)
     x = Activation("relu", name="activation_0")(x)
     x = Dropout(0.4, name="dropout_0")(x)
 
-    # 第二層: 512 → 256
+    # 第二層: 256
     x = Dense(256, name="dense_256")(x)
     x = BatchNormalization(name="batchnorm_1")(x)
     x = Activation("relu", name="activation_1")(x)
     x = Dropout(0.35, name="dropout_1")(x)
 
-    # 第三層: 256 → 128
+    # 第三層: 128
     x = Dense(128, name="dense_128")(x)
     x = BatchNormalization(name="batchnorm_2")(x)
     x = Activation("relu", name="activation_2")(x)
     x = Dropout(0.3, name="dropout_2")(x)
 
-    # 第四層: 128 → 64
+    # 第四層: 64
     x = Dense(64, name="dense_64")(x)
     x = BatchNormalization(name="batchnorm_3")(x)
     x = Activation("relu", name="activation_3")(x)
@@ -90,7 +90,6 @@ def main():
     print("=" * 70)
 
     TARGET_SEED = 821407
-    print(f">>> 最佳 random_seed: {TARGET_SEED}")
     keras.utils.set_random_seed(TARGET_SEED)
 
     os.makedirs("output/models", exist_ok=True)
@@ -178,7 +177,7 @@ def main():
         X_train_smote,  # SMOTE 後的訓練子集
         y_train_keras,
         batch_size=bs,
-        epochs=100,  # 增加 epochs
+        epochs=100,
         validation_data=(X_valid, y_valid_keras),  # 驗證集（未 SMOTE）
         callbacks=[early_stopping, reduce_lr],
         verbose=1,
