@@ -191,8 +191,10 @@ def main():
     probs = model.predict(X_test, verbose=0)
     preds = np.argmax(probs, axis=1)
     acc = accuracy_score(y_test, preds)
+    final_val_loss = history.history["val_loss"][-1]
 
     print(f"\n測試集準確率: {acc:.2%}")
+    print(f"最終 Validation Loss: {final_val_loss:.4f}")
     print(f"訓練耗時: {train_time:.1f}s")
 
     # ==================== 6. 儲存結果 ====================
