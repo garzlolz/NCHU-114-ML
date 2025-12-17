@@ -118,7 +118,7 @@ def main():
         [
             X_text_name,  # 500 維
             X_text_desc,  # 500 維
-            csr_matrix(image_features_scaled),  # 3012 維
+            csr_matrix(image_features_scaled),  # 720 維
             csr_matrix(X_price),  # 1 維
         ]
     )

@@ -11,10 +11,10 @@ import matplotlib.font_manager as fm
 
 # 設定中文字體
 from utils.cross_platform_config import set_matplotlib_font
-
 font_name = set_matplotlib_font()
 
 print("使用字型：", font_name)
+
 
 plt.rcParams["font.family"] = "sans-serif"
 plt.rcParams["font.sans-serif"] = [font_name]
@@ -66,14 +66,13 @@ def main():
     X_text_name = tfidf_name.fit_transform(df["text_brand_name"])
     print(f"品牌+名稱特徵維度: {X_text_name.shape}")
 
-    # ==================== 註解掉 description 部分 ====================
-    # # TF-IDF 向量化 - description
-    # print("處理商品描述...")
-    # tfidf_desc = TfidfVectorizer(
-    #     max_features=2769, ngram_range=(1, 3), max_df=0.8, sublinear_tf=True
-    # )
-    # X_text_desc = tfidf_desc.fit_transform(df["text_desc"])
-    # print(f"description 特徵維度: {X_text_desc.shape}")
+    # TF-IDF 向量化 - description
+    print("處理商品描述...")
+    tfidf_desc = TfidfVectorizer(
+        max_features=2769, ngram_range=(1, 3), max_df=0.8, sublinear_tf=True
+    )
+    X_text_desc = tfidf_desc.fit_transform(df["text_desc"])
+    print(f"description 特徵維度: {X_text_desc.shape}")
 
     # ==================== 3. 數值特徵 ====================
     print("\n" + "=" * 70)
@@ -110,26 +109,26 @@ def main():
         percentage = count / len(df) * 100
         print(f"  {i}. {cat:20s} {count:4d} 筆 ({percentage:5.1f}%)")
 
-    # ==================== 6. 合併所有特徵（不含 description）====================
+    # ==================== 6. 合併所有特徵 ====================
     print("\n" + "=" * 70)
-    print("步驟 6: 合併所有特徵 (不含 description)")
+    print("步驟 6: 合併所有特徵")
     print("=" * 70)
 
     X = hstack(
         [
-            X_text_name,  # 2296 維
-            # X_text_desc,                      # ← 註解掉
-            csr_matrix(image_features_scaled),  # 3108 維
+            X_text_name,  # 500 維
+            X_text_desc,  # 500 維
+            csr_matrix(image_features_scaled),  # 3012 維
             csr_matrix(X_price),  # 1 維
         ]
     )
 
     print(f"最終特徵維度: {X.shape}")
-    print(f"  - 文字 (brand+name):  {X_text_name.shape[1]} 維")
-    print(f"  - 文字 (description): 0 維 (已移除)")
-    print(f"  - 圖片 (500x500):     {image_features.shape[1]} 維")
-    print(f"  - 價格:               1 維")
-    print(f"  - 總計:               {X.shape[1]} 維")
+    print(f"  - 文字 (brand+name):  2296 維")
+    print(f"  - 文字 (description): 2769 維")
+    print(f"  - 圖片 (500x500):    720 維")
+    print(f"  - 價格:                 1 維")
+    print(f"  - 總計:              5786 維")
 
     # ==================== 7. 儲存處理後的資料 ====================
     print("\n" + "=" * 70)
@@ -144,12 +143,12 @@ def main():
                 "y": y,
                 "label_encoder": le,
                 "tfidf_name": tfidf_name,
-                # "tfidf_desc": tfidf_desc,  # ← 註解掉
+                "tfidf_desc": tfidf_desc,
                 "scaler_img": scaler_img,
                 "scaler_price": scaler_price,
                 "feature_info": {
                     "name_dim": X_text_name.shape[1],
-                    "desc_dim": 0,  # ← 改為 0
+                    "desc_dim": X_text_desc.shape[1],
                     "img_dim": image_features.shape[1],
                     "price_dim": X_price.shape[1],
                 },

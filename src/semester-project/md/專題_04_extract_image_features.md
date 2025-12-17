@@ -62,7 +62,7 @@ def extract_image_features_500(sku):
         gray = cv2.cvtColor(img_array, cv2.COLOR_RGB2GRAY)
         hog_features = hog(
             gray,
-            pixels_per_cell=(50, 50),  # 適應 500x500 (10×10 cells)
+            pixels_per_cell=(100, 100),  # 適應 500x500 (10×10 cells)
             cells_per_block=(2, 2),  # 每個 block 包含 4 個 cells
             visualize=False,
             feature_vector=True,
