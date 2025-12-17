@@ -136,6 +136,8 @@ def main():
         "results": results,
         "training_times": training_times,
         "predictions": predictions,
+        "X_train": X_train, 
+        "y_train": y_train, 
         "X_train_smote": X_train_smote,
         "y_train_smote": y_train_smote,
         "X_test": X_test,
