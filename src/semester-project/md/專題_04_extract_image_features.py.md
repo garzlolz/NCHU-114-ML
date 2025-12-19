@@ -1,3 +1,4 @@
+```python
 import pandas as pd
 import numpy as np
 from PIL import Image
@@ -164,3 +165,4 @@ print(f"  平均值: {loaded.mean():.4f}")
 print(f"  零向量數量: {(loaded.sum(axis=1) == 0).sum()}")
 
 print("\n 特徵提取完成")
+```

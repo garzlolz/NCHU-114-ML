@@ -1,3 +1,4 @@
+```python
 import pandas as pd
 import requests
 from PIL import Image
@@ -44,3 +45,4 @@ print(f"失敗數量: {len(failed_urls)}")
 if failed_urls:
     with open("failed_downloads.txt", "w") as f:
         f.write("\n".join(failed_urls))
+```

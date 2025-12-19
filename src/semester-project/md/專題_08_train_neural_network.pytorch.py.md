@@ -1,3 +1,4 @@
+```python
 # ==========================================
 # 這隻程式碼嘗試使用 Keras 3 語法取代 tensorflow.keras
 # 原因: 因為 TensorFlow 在 RTX50 系列顯示卡上的支援較差
@@ -271,3 +272,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+```

@@ -1,3 +1,4 @@
+```python
 import pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.model_selection import cross_val_score, StratifiedKFold
@@ -243,3 +244,4 @@ print("=" * 70)
 print(f"預期文字特徵維度: {best_mf_name + best_mf_desc:,} 維")
 print(f"預期準確率提升: {mean_score:.4f} (僅文字特徵)")
 print("=" * 70)
+```

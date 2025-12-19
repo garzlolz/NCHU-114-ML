@@ -1,3 +1,4 @@
+```python
 import pandas as pd
 
 # 讀取資料
@@ -16,3 +17,4 @@ df_clean.to_csv(
     index=False,
     encoding="utf-8-sig",
 )
+```

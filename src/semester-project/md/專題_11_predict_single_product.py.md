@@ -1,3 +1,4 @@
+```python
 """
 單一商品預測器
 輸入圖片路徑、商品名稱、描述進行分類預測
@@ -478,3 +479,4 @@ if __name__ == "__main__":
         csv_path="input/11_predict_single_product.csv",
         output_path="output/predictions_result.csv",
     )
+```

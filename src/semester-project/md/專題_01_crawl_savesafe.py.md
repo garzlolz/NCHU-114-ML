@@ -1,3 +1,4 @@
+```python
 import requests
 from bs4 import BeautifulSoup
 import csv
@@ -301,3 +302,4 @@ if __name__ == "__main__":
     print(f"全部爬取完成！總商品數：{total_products}")
     print(f"資料已寫入：{filename}")
     print("=" * 80)
+```

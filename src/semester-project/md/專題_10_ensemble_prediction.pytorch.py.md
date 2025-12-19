@@ -1,3 +1,4 @@
+```python
 import os
 
 os.environ["KERAS_BACKEND"] = "torch"
@@ -193,3 +194,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+```
