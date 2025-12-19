@@ -1,4 +1,3 @@
-```python
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -8,6 +7,7 @@ import os
 import matplotlib.font_manager as fm
 
 # 設定中文字體
+
 from utils.cross_platform_config import set_matplotlib_font
 
 font_name = set_matplotlib_font()
@@ -18,11 +18,10 @@ plt.rcParams["font.family"] = "sans-serif"
 plt.rcParams["font.sans-serif"] = [font_name]
 plt.rcParams["axes.unicode_minus"] = False
 
-
 def main():
-    print("=" * 70)
-    print("模型比較分析")
-    print("=" * 70)
+print("=" _ 70)
+print("模型比較分析")
+print("=" _ 70)
 
     # 建立輸出資料夾
     os.makedirs("output/models", exist_ok=True)
@@ -275,7 +274,5 @@ def main():
     print("  - output/model_comparison_summary.txt (摘要報告)")
     print(f"  - {best_model_file} (最佳模型資訊)")
 
-
-if __name__ == "__main__":
-    main()
-```
+if **name** == "**main**":
+main()

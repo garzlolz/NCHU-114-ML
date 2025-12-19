@@ -1,4 +1,3 @@
-```python
 import pandas as pd
 import numpy as np
 from PIL import Image
@@ -7,23 +6,24 @@ from skimage.feature import hog
 from tqdm import tqdm
 import os
 
-
 # ======================================================================
+
 # 圖片特徵提取（RGB + HSV + HOG）
-# CSV 欄位: brand(品牌), name(商品名稱), description(詳細描述)
-# ======================================================================
 
+# CSV 欄位: brand(品牌), name(商品名稱), description(詳細描述)
+
+# ======================================================================
 
 # 讀取資料
+
 df = pd.read_csv(
-    "output/savesafe_cleaned_products_20251207_143149.csv", encoding="utf-8-sig"
+"output/savesafe_cleaned_products_20251207_143149.csv", encoding="utf-8-sig"
 )
 print(f"總商品數: {len(df)}")
 
-
 def extract_image_features_500(sku):
-    """提取圖片特徵 - 500x500 原始解析度（RGB + HSV + HOG）"""
-    img_path = f"output/images/{sku}.jpg"
+"""提取圖片特徵 - 500x500 原始解析度（RGB + HSV + HOG）"""
+img_path = f"output/images/{sku}.jpg"
 
     if not os.path.exists(img_path):
         return None, False
@@ -79,35 +79,36 @@ def extract_image_features_500(sku):
         print(f"\nError processing {sku}.jpg: {e}")
         return None, False
 
-
 # 先測試一張圖片，確定維度
-print("\n測試第一張圖片...")
+
+print("\n 測試第一張圖片...")
 test_sku = df["sku"].iloc[0]
 test_features, test_success = extract_image_features_500(test_sku)
 
 if test_success:
-    TARGET_DIM = test_features.shape[0]
-    print(f"  測試成功")
-    print(f"  RGB 顏色特徵: 96 維 (32 bins × 3 通道)")
-    print(f"  HSV 顏色特徵: 48 維 (16 bins × 3 通道)")
-    print(f"  HOG 特徵: {TARGET_DIM - 144} 維")
-    print(f"  總維度: {TARGET_DIM} 維")
+TARGET_DIM = test_features.shape[0]
+print(f" 測試成功")
+print(f" RGB 顏色特徵: 96 維 (32 bins × 3 通道)")
+print(f" HSV 顏色特徵: 48 維 (16 bins × 3 通道)")
+print(f" HOG 特徵: {TARGET_DIM - 144} 維")
+print(f" 總維度: {TARGET_DIM} 維")
 else:
-    print("  測試失敗，請檢查圖片路徑")
-    exit(1)
+print(" 測試失敗，請檢查圖片路徑")
+exit(1)
 
 # 提取所有圖片特徵
-print("\n" + "=" * 70)
+
+print("\n" + "=" _ 70)
 print("開始提取圖片特徵 (500x500，RGB + HSV + HOG)")
 print(f"目標特徵維度: {TARGET_DIM}")
-print("=" * 70)
+print("=" _ 70)
 
 image_features = []
 success_count = 0
 failed_skus = []
 
 for sku in tqdm(df["sku"], desc="提取圖片特徵"):
-    features, success = extract_image_features_500(sku)
+features, success = extract_image_features_500(sku)
 
     if success:
         # 確保維度一致
@@ -127,42 +128,45 @@ for sku in tqdm(df["sku"], desc="提取圖片特徵"):
         failed_skus.append(sku)
 
 # 轉換為 numpy 陣列
+
 image_features_array = np.array(image_features)
 
 # 結果統計
-print("\n" + "=" * 70)
+
+print("\n" + "=" _ 70)
 print("提取結果統計")
-print("=" * 70)
+print("=" _ 70)
 print(f"圖片特徵維度: {image_features_array.shape}")
-print(f"  - RGB 直方圖: 96 維")
-print(f"  - HSV 直方圖: 48 維")
-print(f"  - HOG 特徵: {TARGET_DIM - 144} 維")
+print(f" - RGB 直方圖: 96 維")
+print(f" - HSV 直方圖: 48 維")
+print(f" - HOG 特徵: {TARGET_DIM - 144} 維")
 print(f"成功提取: {success_count}/{len(df)}")
 print(f"失敗數量: {len(failed_skus)}")
-print(f"成功率: {success_count/len(df)*100:.1f}%")
+print(f"成功率: {success_count/len(df)\*100:.1f}%")
 
 if failed_skus:
-    print(f"\n缺失圖片的 SKU: {failed_skus}")
+print(f"\n 缺失圖片的 SKU: {failed_skus}")
 
 # 儲存特徵
+
 output_path = "output/image_features_500.npy"
 np.save(output_path, image_features_array)
 print(f"\n 圖片特徵已儲存到 {output_path}")
 
 # 驗證
-print("\n" + "=" * 70)
+
+print("\n" + "=" _ 70)
 print("驗證儲存的特徵")
-print("=" * 70)
+print("=" _ 70)
 loaded = np.load(output_path)
 print(f"載入的特徵維度: {loaded.shape}")
 print(f"資料型態: {loaded.dtype}")
 print(f"記憶體大小: {loaded.nbytes / 1024 / 1024:.2f} MB")
 
-print(f"\n特徵統計:")
-print(f"  最小值: {loaded.min():.4f}")
-print(f"  最大值: {loaded.max():.4f}")
-print(f"  平均值: {loaded.mean():.4f}")
-print(f"  零向量數量: {(loaded.sum(axis=1) == 0).sum()}")
+print(f"\n 特徵統計:")
+print(f" 最小值: {loaded.min():.4f}")
+print(f" 最大值: {loaded.max():.4f}")
+print(f" 平均值: {loaded.mean():.4f}")
+print(f" 零向量數量: {(loaded.sum(axis=1) == 0).sum()}")
 
 print("\n 特徵提取完成")
-```

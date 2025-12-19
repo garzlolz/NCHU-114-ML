@@ -1,4 +1,3 @@
-```python
 import os
 
 os.environ["KERAS_BACKEND"] = "torch"
@@ -15,15 +14,15 @@ from sklearn.model_selection import train_test_split
 from utils.cross_platform_config import set_matplotlib_font
 
 # 設定字體
+
 font_name = set_matplotlib_font()
 plt.rcParams["font.family"] = "sans-serif"
 plt.rcParams["font.sans-serif"] = [font_name]
 
-
 def main():
-    print("=" * 70)
-    print("進階集成優化: 精細權重搜索 & Stacking")
-    print("=" * 70)
+print("=" _ 70)
+print("進階集成優化: 精細權重搜索 & Stacking")
+print("=" _ 70)
 
     # ==================== 1. 準備資料與模型 ====================
     print("步驟 1: 載入模型與資料...")
@@ -191,7 +190,5 @@ def main():
     )
     plt.close()
 
-
-if __name__ == "__main__":
-    main()
-```
+if **name** == "**main**":
+main()

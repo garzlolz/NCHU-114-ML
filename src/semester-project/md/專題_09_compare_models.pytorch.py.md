@@ -1,8 +1,11 @@
-```python
 # ==========================================
+
 # 模型比較腳本：整合傳統機器學習與神經網路的結果
+
 # 讀取 07 和 08 的訓練結果，生成比較圖表和摘要報告
+
 # ==========================================
+
 import os
 
 os.environ["KERAS_BACKEND"] = "torch"
@@ -15,6 +18,7 @@ import pickle
 import keras
 
 # 設定中文字體
+
 from utils.cross_platform_config import set_matplotlib_font
 
 font_name = set_matplotlib_font()
@@ -24,11 +28,10 @@ plt.rcParams["font.family"] = "sans-serif"
 plt.rcParams["font.sans-serif"] = [font_name]
 plt.rcParams["axes.unicode_minus"] = False
 
-
 def main():
-    print("=" * 70)
-    print("模型比較分析")
-    print("=" * 70)
+print("=" _ 70)
+print("模型比較分析")
+print("=" _ 70)
 
     # 建立輸出資料夾
     os.makedirs("output/result_images", exist_ok=True)
@@ -282,7 +285,5 @@ def main():
     print("  - output/model_comparison_summary.txt")
     print("  - output/models/final_best_model_info.pkl")
 
-
-if __name__ == "__main__":
-    main()
-```
+if **name** == "**main**":
+main()

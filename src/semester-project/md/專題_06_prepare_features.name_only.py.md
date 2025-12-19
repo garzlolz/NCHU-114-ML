@@ -1,4 +1,3 @@
-```python
 import pandas as pd
 import numpy as np
 from sklearn.preprocessing import LabelEncoder, StandardScaler
@@ -11,6 +10,7 @@ import matplotlib.pyplot as plt
 import matplotlib.font_manager as fm
 
 # 設定中文字體
+
 from utils.cross_platform_config import set_matplotlib_font
 
 font_name = set_matplotlib_font()
@@ -21,11 +21,10 @@ plt.rcParams["font.family"] = "sans-serif"
 plt.rcParams["font.sans-serif"] = [font_name]
 plt.rcParams["axes.unicode_minus"] = False
 
-
 def main():
-    print("=" * 70)
-    print("步驟 1: 讀取資料")
-    print("-" * 70)
+print("=" _ 70)
+print("步驟 1: 讀取資料")
+print("-" _ 70)
 
     # 讀取 CSV
     csv_path = "output/savesafe_cleaned_products_20251207_143149.csv"
@@ -158,7 +157,5 @@ def main():
         )
     print(f"處理完成！資料已儲存至 {output_file}")
 
-
-if __name__ == "__main__":
-    main()
-```
+if **name** == "**main**":
+main()

@@ -1,4 +1,3 @@
-```python
 import requests
 from bs4 import BeautifulSoup
 import csv
@@ -6,71 +5,71 @@ import time
 from datetime import datetime
 
 # 分類與對應 t_s_id
+
 categories = {
-    "米油罐頭泡麵": [
-        ("米/五穀/濃湯", "42649"),
-        ("油/調味料", "42652"),
-        ("泡麵 / 麵條", "42660"),
-        ("罐頭調理包", "42644"),
-    ],
-    "餅乾零食飲料": [
-        ("休閒零嘴", "39140"),
-        ("美味餅乾", "39198"),
-        ("糖果/巧克力", "62362"),
-        ("飲料", "39153"),
-    ],
-    "奶粉養生保健": [
-        ("養生保健/常備品", "43047"),
-        ("奶粉/穀麥片", "43046"),
-        ("特色茶品", "43053"),
-        ("咖啡/可可", "43049"),
-    ],
-    "沐浴開架保養": [
-        ("沐浴乳香皂", "42661"),
-        ("美髮造型", "42640"),
-        ("口腔清潔", "42638"),
-        ("臉部清潔", "42659"),
-        ("開架/身體保養", "42643"),
-    ],
-    "餐廚衛浴居家": [
-        ("鍋具/飲水/廚房", "39213"),
-        ("掃除用具/照明/五金", "44678"),
-        ("傢飾/收納/衛浴", "39202"),
-        ("寵物/園藝", "39189"),
-    ],
-    "日用清潔用品": [
-        ("衛生紙/濕巾", "42657"),
-        ("衣物清潔", "42637"),
-        ("居家清潔", "42642"),
-        ("衛生棉/護墊", "54722"),
-        ("成人/嬰兒紙尿褲", "54952"),
-    ],
-    "家電/3C配件": [
-        ("廚房家電", "39220"),
-        ("季節家電", "39197"),
-        ("生活家電", "47024"),
-        ("3C/電腦周邊/OA", "39172"),
-    ],
-    "文具休閒服飾": [
-        ("文具/辦公用品", "57242"),
-        ("汽機車百貨", "39233"),
-        ("休閒/運動", "39203"),
-        ("服飾/配件", "67217"),
-    ],
+"米油罐頭泡麵": [
+("米/五穀/濃湯", "42649"),
+("油/調味料", "42652"),
+("泡麵 / 麵條", "42660"),
+("罐頭調理包", "42644"),
+],
+"餅乾零食飲料": [
+("休閒零嘴", "39140"),
+("美味餅乾", "39198"),
+("糖果/巧克力", "62362"),
+("飲料", "39153"),
+],
+"奶粉養生保健": [
+("養生保健/常備品", "43047"),
+("奶粉/穀麥片", "43046"),
+("特色茶品", "43053"),
+("咖啡/可可", "43049"),
+],
+"沐浴開架保養": [
+("沐浴乳香皂", "42661"),
+("美髮造型", "42640"),
+("口腔清潔", "42638"),
+("臉部清潔", "42659"),
+("開架/身體保養", "42643"),
+],
+"餐廚衛浴居家": [
+("鍋具/飲水/廚房", "39213"),
+("掃除用具/照明/五金", "44678"),
+("傢飾/收納/衛浴", "39202"),
+("寵物/園藝", "39189"),
+],
+"日用清潔用品": [
+("衛生紙/濕巾", "42657"),
+("衣物清潔", "42637"),
+("居家清潔", "42642"),
+("衛生棉/護墊", "54722"),
+("成人/嬰兒紙尿褲", "54952"),
+],
+"家電/3C 配件": [
+("廚房家電", "39220"),
+("季節家電", "39197"),
+("生活家電", "47024"),
+("3C/電腦周邊/OA", "39172"),
+],
+"文具休閒服飾": [
+("文具/辦公用品", "57242"),
+("汽機車百貨", "39233"),
+("休閒/運動", "39203"),
+("服飾/配件", "67217"),
+],
 }
 
 headers = {
-    "User-Agent": (
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-        "AppleWebKit/537.36 (KHTML, like Gecko) "
-        "Chrome/98.0.4758.102 Safari/537.36"
-    )
+"User-Agent": (
+"Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+"AppleWebKit/537.36 (KHTML, like Gecko) "
+"Chrome/98.0.4758.102 Safari/537.36"
+)
 }
 
-
 def fetch_product_detail(product_url, product_name, max_retries=3):
-    """
-    抓取商品詳細頁的描述資訊
+"""
+抓取商品詳細頁的描述資訊
 
     Args:
         product_url: 商品詳細頁網址
@@ -120,10 +119,9 @@ def fetch_product_detail(product_url, product_name, max_retries=3):
             print(f"    請求錯誤：{e}")
             return ""
 
-
 def fetch_products(category_id, category_name, subcategory_name):
-    """
-    依分類抓取商品列表
+"""
+依分類抓取商品列表
 
     欄位說明：
     - brand: 品牌名稱 (ItemName)
@@ -248,12 +246,11 @@ def fetch_products(category_id, category_name, subcategory_name):
 
     return products
 
-
 def save_to_csv_append(products, filename, write_header=False):
-    """以追加模式寫入 CSV 檔案"""
-    if not products:
-        print("沒有資料可寫入。")
-        return
+"""以追加模式寫入 CSV 檔案"""
+if not products:
+print("沒有資料可寫入。")
+return
 
     keys = products[0].keys()
     mode = "a" if not write_header else "w"
@@ -266,11 +263,9 @@ def save_to_csv_append(products, filename, write_header=False):
 
     print(f"已將 {len(products)} 筆商品寫入 {filename}\n")
 
-
-if __name__ == "__main__":
-    # 產生含時間戳記的輸出檔名
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    filename = f"./output/savesafe_products_{timestamp}.csv"
+if **name** == "**main**": # 產生含時間戳記的輸出檔名
+timestamp = datetime.now().strftime("%Y%m%d*%H%M%S")
+filename = f"./output/savesafe_products*{timestamp}.csv"
 
     print("\n" + "=" * 80)
     print("SaveSafe 商品爬蟲")
@@ -302,4 +297,3 @@ if __name__ == "__main__":
     print(f"全部爬取完成！總商品數：{total_products}")
     print(f"資料已寫入：{filename}")
     print("=" * 80)
-```

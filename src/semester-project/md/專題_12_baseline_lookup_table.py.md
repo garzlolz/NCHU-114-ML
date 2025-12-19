@@ -1,5 +1,5 @@
-```python
 # 07_baseline_lookup_table.py
+
 import pandas as pd
 import numpy as np
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
@@ -9,6 +9,7 @@ import seaborn as sns
 import os
 
 # 設定中文字體
+
 from utils.cross_platform_config import set_matplotlib_font
 font_name = set_matplotlib_font()
 
@@ -18,11 +19,10 @@ plt.rcParams["font.family"] = "sans-serif"
 plt.rcParams["font.sans-serif"] = [font_name]
 plt.rcParams["axes.unicode_minus"] = False
 
-
 def main():
-    print("=" * 70)
-    print("Baseline 方法: Lookup Table (關鍵字查表法)")
-    print("=" * 70)
+print("=" _ 70)
+print("Baseline 方法: Lookup Table (關鍵字查表法)")
+print("=" _ 70)
 
     # ==================== 1. 讀取資料 ====================
     print("\n步驟 1: 讀取資料")
@@ -429,7 +429,5 @@ def main():
     print(f"  已分類準確率: {accuracy_classified:.2%}")
     print(f"  分類覆蓋率: {classified_mask.sum()/len(df)*100:.1f}%")
 
-
-if __name__ == "__main__":
-    main()
-```
+if **name** == "**main**":
+main()

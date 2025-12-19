@@ -1,4 +1,3 @@
-```python
 """
 單一商品預測器
 輸入圖片路徑、商品名稱、描述進行分類預測
@@ -17,14 +16,14 @@ import keras
 from scipy.sparse import hstack, csr_matrix
 
 # 設定中文字體
+
 from utils.cross_platform_config import set_matplotlib_font
 
 font_name = set_matplotlib_font()
 print("使用字型：", font_name)
 
-
 class ProductClassifier:
-    """商品分類預測器"""
+"""商品分類預測器"""
 
     def __init__(self):
         """載入所有需要的模型與編碼器"""
@@ -260,9 +259,8 @@ class ProductClassifier:
 
         return predicted_category, confidence, probs
 
-
 def main():
-    """示範使用方式"""
+"""示範使用方式"""
 
     # 初始化預測器
     classifier = ProductClassifier()
@@ -318,10 +316,9 @@ def main():
             show_probabilities=True,
         )
 
-
 def predict_from_csv(csv_path, output_path="output/predictions_result.csv"):
-    """
-    從 CSV 讀取商品資料並進行批次預測
+"""
+從 CSV 讀取商品資料並進行批次預測
 
     Args:
         csv_path: 輸入 CSV 檔案路徑
@@ -472,11 +469,9 @@ def predict_from_csv(csv_path, output_path="output/predictions_result.csv"):
 
     return result_df
 
-
-if __name__ == "__main__":
+if **name** == "**main**":
 
     predict_from_csv(
         csv_path="input/11_predict_single_product.csv",
         output_path="output/predictions_result.csv",
     )
-```

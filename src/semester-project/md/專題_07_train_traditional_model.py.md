@@ -1,4 +1,3 @@
-```python
 import matplotlib.pyplot as plt
 import seaborn as sns
 import pickle
@@ -15,6 +14,7 @@ from sklearn.metrics import accuracy_score, confusion_matrix
 from scipy import sparse
 
 # 設定中文字體
+
 from utils.cross_platform_config import set_matplotlib_font
 
 font_name = set_matplotlib_font()
@@ -24,11 +24,10 @@ plt.rcParams["font.family"] = "sans-serif"
 plt.rcParams["font.sans-serif"] = [font_name]
 plt.rcParams["axes.unicode_minus"] = False
 
-
 def main():
-    print("=" * 70)
-    print("傳統機器學習模型訓練")
-    print("=" * 70)
+print("=" _ 70)
+print("傳統機器學習模型訓練")
+print("=" _ 70)
 
     # 建立輸出資料夾
     os.makedirs("output/models", exist_ok=True)
@@ -175,7 +174,5 @@ def main():
     plt.savefig("output/result_images/traditional_confusion_matrices.png", dpi=300)
     print("圖表已更新。")
 
-
-if __name__ == "__main__":
-    main()
-```
+if **name** == "**main**":
+main()

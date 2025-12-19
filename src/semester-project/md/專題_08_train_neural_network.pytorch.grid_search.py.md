@@ -1,4 +1,3 @@
-```python
 import os
 import pickle
 import time
@@ -416,4 +415,3 @@ platform_info = f"{system_name}-{platform.machine()}"
 
 if **name** == "**main**":
 main()
-```

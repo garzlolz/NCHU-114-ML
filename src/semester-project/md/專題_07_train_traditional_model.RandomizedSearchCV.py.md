@@ -1,17 +1,16 @@
-```python
 import matplotlib.pyplot as plt
 import seaborn as sns
 import pickle
 import os
 import time
-import numpy as np  # 需要 numpy
+import numpy as np # 需要 numpy
 
 from imblearn.over_sampling import SMOTE
 
 from sklearn.model_selection import (
-    train_test_split,
-    RandomizedSearchCV,
-)  # 新增 RandomizedSearchCV
+train_test_split,
+RandomizedSearchCV,
+) # 新增 RandomizedSearchCV
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score, confusion_matrix
@@ -19,6 +18,7 @@ from sklearn.metrics import accuracy_score, confusion_matrix
 from scipy import sparse
 
 # 設定中文字體
+
 from utils.cross_platform_config import set_matplotlib_font
 
 font_name = set_matplotlib_font()
@@ -28,11 +28,10 @@ plt.rcParams["font.family"] = "sans-serif"
 plt.rcParams["font.sans-serif"] = [font_name]
 plt.rcParams["axes.unicode_minus"] = False
 
-
 def main():
-    print("=" * 70)
-    print("傳統機器學習模型訓練 (含 Random Forest 優化)")
-    print("=" * 70)
+print("=" _ 70)
+print("傳統機器學習模型訓練 (含 Random Forest 優化)")
+print("=" _ 70)
 
     # 建立輸出資料夾
     os.makedirs("output/models", exist_ok=True)
@@ -211,7 +210,5 @@ def main():
     plt.savefig("output/result_images/traditional_confusion_matrices.png", dpi=300)
     print("圖表已更新。")
 
-
-if __name__ == "__main__":
-    main()
-```
+if **name** == "**main**":
+main()

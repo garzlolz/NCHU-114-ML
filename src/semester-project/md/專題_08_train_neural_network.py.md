@@ -1,4 +1,3 @@
-```python
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -17,6 +16,7 @@ from tensorflow.keras.callbacks import EarlyStopping, ReduceLROnPlateau
 from tensorflow.keras.optimizers import Adam
 
 # 設定中文字體
+
 from utils.cross_platform_config import set_matplotlib_font
 
 font_name = set_matplotlib_font()
@@ -26,13 +26,12 @@ plt.rcParams["font.family"] = "sans-serif"
 plt.rcParams["font.sans-serif"] = [font_name]
 plt.rcParams["axes.unicode_minus"] = False
 
-
 def build_keras_model(input_dim, num_classes, learning_rate):
-    """
-    建立 Keras 神經網路模型 (TensorFlow Backend)。
-    架構：512 -> 256 -> 128 -> 64 -> Softmax
-    """
-    inputs = Input(shape=(input_dim,), name="input_features")
+"""
+建立 Keras 神經網路模型 (TensorFlow Backend)。
+架構：512 -> 256 -> 128 -> 64 -> Softmax
+"""
+inputs = Input(shape=(input_dim,), name="input_features")
 
     # 第一層: 512
     x = Dense(512, name="dense_512")(inputs)
@@ -72,11 +71,10 @@ def build_keras_model(input_dim, num_classes, learning_rate):
 
     return model
 
-
 def main():
-    print("=" * 70)
-    print("神經網路模型訓練 (Keras + TensorFlow Backend)")
-    print("=" * 70)
+print("=" _ 70)
+print("神經網路模型訓練 (Keras + TensorFlow Backend)")
+print("=" _ 70)
 
     TARGET_SEED = 42  # 使用固定種子以便重現
 
@@ -281,7 +279,5 @@ def main():
     print("  - output/result_images/keras_training_history.png")
     print("  - output/result_images/keras_confusion_matrix.png")
 
-
-if __name__ == "__main__":
-    main()
-```
+if **name** == "**main**":
+main()

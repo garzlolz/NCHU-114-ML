@@ -1,11 +1,17 @@
-```python
 # ==========================================
+
 # 這隻程式碼嘗試使用 Keras 3 語法取代 tensorflow.keras
+
 # 原因: 因為 TensorFlow 在 RTX50 系列顯示卡上的支援較差
+
 # pytorch 對新顯示卡支援較好，因此改用 Keras 3 + PyTorch Backend
+
 # 主要差異在於 import 的方式不同
+
 # 其餘程式碼介面基本上跟 tensorflow.keras 相同
+
 # ==========================================
+
 import os
 
 os.environ["KERAS_BACKEND"] = "torch"
@@ -20,7 +26,7 @@ from scipy import sparse
 
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, confusion_matrix
-from imblearn.over_sampling import SMOTE  # 新增這行
+from imblearn.over_sampling import SMOTE # 新增這行
 
 import keras
 from keras import Model, Input
@@ -30,6 +36,7 @@ from keras.callbacks import EarlyStopping, ReduceLROnPlateau
 from keras.optimizers import Adam
 
 # 設定中文字體
+
 from utils.cross_platform_config import set_matplotlib_font
 
 font_name = set_matplotlib_font()
@@ -41,18 +48,16 @@ plt.rcParams["axes.unicode_minus"] = False
 
 print(f"目前使用的 Keras 後端: {keras.backend.backend()}")
 
-
 def build_keras_model(input_dim, num_classes, learning_rate):
-    """
-    建立 Keras 神經網路模型 (PyTorch Backend)。
-    架構： 512 -> 256 -> 128 -> 64 -> Softmax
-    """
-    inputs = Input(shape=(input_dim,), name="input_features")
-    # 第一層: 512
-    x = Dense(512, name="dense_512")(inputs)
-    x = BatchNormalization(name="batchnorm_0")(x)
-    x = Activation("relu", name="activation_0")(x)
-    x = Dropout(0.4, name="dropout_0")(x)
+"""
+建立 Keras 神經網路模型 (PyTorch Backend)。
+架構： 512 -> 256 -> 128 -> 64 -> Softmax
+"""
+inputs = Input(shape=(input_dim,), name="input_features") # 第一層: 512
+x = Dense(512, name="dense_512")(inputs)
+x = BatchNormalization(name="batchnorm_0")(x)
+x = Activation("relu", name="activation_0")(x)
+x = Dropout(0.4, name="dropout_0")(x)
 
     # 第二層: 256
     x = Dense(256, name="dense_256")(x)
@@ -84,11 +89,10 @@ def build_keras_model(input_dim, num_classes, learning_rate):
     )
     return model
 
-
 def main():
-    print("=" * 70)
-    print("神經網路模型訓練 (Keras 3 + PyTorch Backend)")
-    print("=" * 70)
+print("=" _ 70)
+print("神經網路模型訓練 (Keras 3 + PyTorch Backend)")
+print("=" _ 70)
 
     TARGET_SEED = 821407
     keras.utils.set_random_seed(TARGET_SEED)
@@ -269,7 +273,5 @@ def main():
 
     print("圖表已生成完成。")
 
-
-if __name__ == "__main__":
-    main()
-```
+if **name** == "**main**":
+main()
