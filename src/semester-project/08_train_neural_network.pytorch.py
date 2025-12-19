@@ -152,8 +152,8 @@ def main():
     # ==================== 4. 訓練模型 ====================
     print("\n步驟 4: 開始訓練")
 
-    lr = 0.00025
-    bs = 20
+    lr = 0.0001
+    bs = 18
 
     print(f"\n--- Training: Seed={TARGET_SEED}, lr={lr}, bs={bs} ---")
 
