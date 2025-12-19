@@ -143,7 +143,12 @@ def main():
     print(f"訓練子集（未 SMOTE）: {X_train_orig.shape}")
     print(f"驗證集: {X_valid.shape}")
 
-    # 轉換驗證集標籤為 one-hot
+    print("\n執行 SMOTE")
+    smote_start = time.time()
+    smote = SMOTE(random_state=42, k_neighbors=3)
+    X_train_smote, y_train_smote = smote.fit_resample(X_train_orig, y_train_orig)
+
+    y_train_keras = to_categorical(y_train_smote, num_classes=num_classes)
     y_valid_keras = to_categorical(y_valid, num_classes=num_classes)
 
     # 1. Learning Rate
@@ -191,7 +196,6 @@ def main():
 
     if os.path.isfile(csv_all_file):
         print(f"\n檢測到歷史紀錄檔: {csv_all_file}")
-        print("正在讀取已完成的進度與最佳準確率...")
         try:
             with open(csv_all_file, mode="r", newline="", encoding="utf-8") as f:
                 reader = csv.DictReader(f)
@@ -201,12 +205,9 @@ def main():
                         r_bs = int(row["Batch_Size"])
                         r_did = int(row["Dropout_Config_ID"])
                         r_acc = float(row["Accuracy"])
-
                         existing_combinations.add((r_lr, r_bs, r_did))
-
                         if r_acc > global_best_acc:
                             global_best_acc = r_acc
-
                     except (ValueError, KeyError):
                         continue
         except Exception as e:
@@ -224,7 +225,6 @@ def main():
                 if e_bs == bs and e_did == d_id and abs(e_lr - lr) < 1e-9:
                     is_done = True
                     break
-
         if not is_done:
             param_combinations.append(combo)
 
@@ -243,11 +243,9 @@ def main():
         return
     # ================= [斷點續練邏輯 END] =================
 
-    # 準備 CSV (如果檔案不存在才寫入 header)
     if not os.path.isfile(csv_all_file):
         with open(csv_all_file, mode="w", newline="", encoding="utf-8") as f:
             writer = csv.writer(f)
-            # [修改] 新增 "Dropout_Values" 欄位
             writer.writerow(
                 [
                     "時間戳記",
@@ -261,19 +259,16 @@ def main():
                     "平台",
                 ]
             )
-        print(f"已建立新紀錄檔: {csv_all_file}")
 
     best_params = None
     best_preds = None
     best_history = None
-
     start_session_time = time.time()
     start_idx = skipped_count + 1
 
     for idx, (lr, bs, d_id) in enumerate(param_combinations, start=start_idx):
         dropouts = dropout_grid[d_id]
 
-        # [關鍵修改] 每次迴圈重新設定 Seed
         keras.utils.set_random_seed(BASE_SEED)
 
         print(
@@ -281,12 +276,6 @@ def main():
             f"lr={lr}, bs={bs}, dropout={dropouts}"
         )
 
-        # ========== 對訓練子集做 SMOTE ==========
-        smote = SMOTE(random_state=42, k_neighbors=3)
-        X_train_smote, y_train_smote = smote.fit_resample(X_train_orig, y_train_orig)
-
-        # 轉換為 one-hot
-        y_train_keras = to_categorical(y_train_smote, num_classes=num_classes)
 
         model = build_keras_model(
             input_dim=X_train_smote.shape[1],
@@ -319,7 +308,6 @@ def main():
         )
         elapsed_time = time.time() - start_time
 
-        # 評估模型
         probs = model.predict(X_test, verbose=0)
         preds = np.argmax(probs, axis=1)
         acc = accuracy_score(y_test, preds)
@@ -329,8 +317,6 @@ def main():
         print(f" -> Stop Epoch  : {len(history.history['loss'])}")
 
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
-        # [修改] 寫入 CSV 時加入 str(dropouts)
         with open(csv_all_file, mode="a", newline="", encoding="utf-8") as f:
             writer = csv.writer(f)
             writer.writerow(
@@ -340,7 +326,7 @@ def main():
                     lr,
                     bs,
                     d_id,
-                    str(dropouts),  # 這裡將 list 轉成 string 儲存
+                    str(dropouts),
                     f"{acc:.6f}",
                     f"{elapsed_time:.2f}",
                     platform_info,
@@ -348,7 +334,6 @@ def main():
             )
 
         if acc > global_best_acc:
-            old_best = global_best_acc
             global_best_acc = acc
             best_params = {
                 "learning_rate": lr,
@@ -359,15 +344,11 @@ def main():
             best_preds = preds
             best_history = history
 
-            print(
-                f" *** NEW BEST *** acc: {old_best:.4f} -> {global_best_acc:.4f} "
-                f"(lr={lr}, bs={bs})"
-            )
+            print(f" *** NEW BEST *** acc: {global_best_acc:.4f}")
 
-            # 儲存最佳模型
+            # 儲存最佳結果
             model.save("output/models/best_keras_model.keras")
 
-            # 儲存結果到 pickle
             keras_results = {
                 "best_model": None,
                 "best_lr": lr,
@@ -384,7 +365,7 @@ def main():
             with open(results_file, "wb") as f:
                 pickle.dump(keras_results, f)
 
-            # 繪製最佳混淆矩陣
+            # 繪圖
             plt.figure(figsize=(12, 10))
             cm = confusion_matrix(y_test, best_preds)
             sns.heatmap(
@@ -396,58 +377,41 @@ def main():
                 yticklabels=le.classes_,
             )
             plt.title(
-                f"Keras Grid Search Best\n"
-                f"Acc={global_best_acc:.4f}, lr={lr}, bs={bs}"
+                f"Keras Grid Search Best\nAcc={global_best_acc:.4f}, lr={lr}, bs={bs}"
             )
-            plt.xlabel("Predicted")
-            plt.ylabel("Actual")
             plt.tight_layout()
             plt.savefig("output/result_images/keras_best_confusion_matrix.png")
             plt.close()
 
-    # 全部跑完後，畫訓練曲線
+    # 最終繪圖
     if best_history is not None:
         print("\n繪製本次最佳組合的訓練曲線...")
         h_dict = best_history.history
-
         plt.figure(figsize=(14, 5))
         plt.subplot(1, 2, 1)
         plt.plot(h_dict["loss"], label="Train Loss")
         plt.plot(h_dict["val_loss"], label="Val Loss")
-        plt.title("Loss Curve (Best Hyperparameters)")
-        plt.xlabel("Epoch")
-        plt.ylabel("Loss")
+        plt.title("Loss Curve")
         plt.legend()
         plt.grid(True, alpha=0.3)
-
         plt.subplot(1, 2, 2)
         plt.plot(h_dict["accuracy"], label="Train Acc")
         plt.plot(h_dict["val_accuracy"], label="Val Acc")
-        plt.title("Accuracy Curve (Best Hyperparameters)")
-        plt.xlabel("Epoch")
-        plt.ylabel("Accuracy")
+        plt.title("Accuracy Curve")
         plt.legend()
         plt.grid(True, alpha=0.3)
-
         plt.tight_layout()
         plt.savefig("output/result_images/keras_best_training_history.png", dpi=300)
         plt.close()
 
         session_time = time.time() - start_session_time
         print("\nGrid Search 完成！")
-        print(f"  本次執行數: {total_combos_to_run}")
         print(f"  總耗時    : {session_time/3600:.2f} 小時")
         print(
-            "  最佳組合: "
-            f"lr={best_params['learning_rate']}, "
-            f"bs={best_params['batch_size']}, "
-            f"dropout={best_params['dropouts']}, "
-            f"acc={global_best_acc:.4f}"
+            f"  最佳組合: lr={best_params['learning_rate']}, bs={best_params['batch_size']}, acc={global_best_acc:.4f}"
         )
-        print(f"  紀錄檔案: {csv_all_file}")
-        print(f"  模型 / 結果: best_keras_model.keras, keras_results.pkl")
     else:
-        print("\n本次執行未發現比歷史紀錄更好的模型，或無須執行任何訓練。")
+        print("\n無新結果。")
 
 
 if __name__ == "__main__":
