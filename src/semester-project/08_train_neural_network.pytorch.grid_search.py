@@ -125,9 +125,9 @@ def main():
     results_file = "output/models/keras_results_grid.pkl"
     csv_all_file = "output/models/keras_grid_search_optimized.csv"
 
-    # [關鍵修改] 使用產生 84.75% 結果的種子
+    # [設定全域種子] 用於 train_test_split 的一致性
     BASE_SEED = 821407
-    print(f"設定 Random Seed: {BASE_SEED}")
+    print(f"設定 Base Random Seed: {BASE_SEED}")
     keras.utils.set_random_seed(BASE_SEED)
 
     # ========== 先分割驗證集（在 SMOTE 之前） ==========
@@ -146,7 +146,7 @@ def main():
     # 轉換驗證集標籤為 one-hot
     y_valid_keras = to_categorical(y_valid, num_classes=num_classes)
 
-    # 1. Learning Rate: 12 values (0.00005 ~ 0.0004)
+    # 1. Learning Rate
     lr_list = [
         0.00005,
         0.00008,
@@ -162,10 +162,10 @@ def main():
         0.0004,
     ]
 
-    # 2. Batch Size: 9 values
+    # 2. Batch Size
     bs_list = [16, 18, 20, 22, 24, 26, 28, 32, 48]
 
-    # 3. Dropout Configs: 10 variations
+    # 3. Dropout Configs
     dropout_grid = [
         [0.3, 0.25, 0.2, 0.15],
         [0.35, 0.3, 0.25, 0.2],
@@ -197,21 +197,17 @@ def main():
                 reader = csv.DictReader(f)
                 for row in reader:
                     try:
-                        # 讀取參數以進行排除
                         r_lr = float(row["Learning_Rate"])
                         r_bs = int(row["Batch_Size"])
                         r_did = int(row["Dropout_Config_ID"])
                         r_acc = float(row["Accuracy"])
 
-                        # 加入集合 (Tuple 結構)
                         existing_combinations.add((r_lr, r_bs, r_did))
 
-                        # 更新目前的最佳紀錄，避免重新跑時以為是新的最佳
                         if r_acc > global_best_acc:
                             global_best_acc = r_acc
 
-                    except (ValueError, KeyError) as e:
-                        # 略過解析錯誤的行
+                    except (ValueError, KeyError):
                         continue
         except Exception as e:
             print(f"讀取 CSV 時發生警告 (將重新開始): {e}")
@@ -220,13 +216,10 @@ def main():
     param_combinations = []
     for combo in all_combinations:
         lr, bs, d_id = combo
-        # 檢查是否存在於已完成集合中
-        # 為了避免浮點數精度問題 (如 0.0001 vs 0.000100001)，做一個簡單的容差比對
         is_done = False
         if (lr, bs, d_id) in existing_combinations:
             is_done = True
         else:
-            # 備用檢查：如果直接比對失敗，檢查數值接近度
             for e_lr, e_bs, e_did in existing_combinations:
                 if e_bs == bs and e_did == d_id and abs(e_lr - lr) < 1e-9:
                     is_done = True
@@ -254,6 +247,7 @@ def main():
     if not os.path.isfile(csv_all_file):
         with open(csv_all_file, mode="w", newline="", encoding="utf-8") as f:
             writer = csv.writer(f)
+            # [修改] 新增 "Dropout_Values" 欄位
             writer.writerow(
                 [
                     "時間戳記",
@@ -261,6 +255,7 @@ def main():
                     "Learning_Rate",
                     "Batch_Size",
                     "Dropout_Config_ID",
+                    "Dropout_Values",
                     "Accuracy",
                     "訓練耗時(秒)",
                     "平台",
@@ -273,18 +268,20 @@ def main():
     best_history = None
 
     start_session_time = time.time()
-
-    # idx 從 skipped_count + 1 開始顯示，這樣 Log 才會接續 (例如 [101/500])
     start_idx = skipped_count + 1
 
     for idx, (lr, bs, d_id) in enumerate(param_combinations, start=start_idx):
         dropouts = dropout_grid[d_id]
+
+        # [關鍵修改] 每次迴圈重新設定 Seed
+        keras.utils.set_random_seed(BASE_SEED)
+
         print(
             f"\n[{idx:03d}/{total_original_combos}] 開始訓練 - "
             f"lr={lr}, bs={bs}, dropout={dropouts}"
         )
 
-        # ========== 對訓練子集做 SMOTE (每次迴圈重新生成確保獨立性) ==========
+        # ========== 對訓練子集做 SMOTE ==========
         smote = SMOTE(random_state=42, k_neighbors=3)
         X_train_smote, y_train_smote = smote.fit_resample(X_train_orig, y_train_orig)
 
@@ -318,7 +315,7 @@ def main():
             epochs=100,
             validation_data=(X_valid, y_valid_keras),
             callbacks=[early_stopping, reduce_lr],
-            verbose=0,  # 關閉詳細輸出以保持 Grid Search 介面整潔
+            verbose=0,
         )
         elapsed_time = time.time() - start_time
 
@@ -332,6 +329,8 @@ def main():
         print(f" -> Stop Epoch  : {len(history.history['loss'])}")
 
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+        # [修改] 寫入 CSV 時加入 str(dropouts)
         with open(csv_all_file, mode="a", newline="", encoding="utf-8") as f:
             writer = csv.writer(f)
             writer.writerow(
@@ -341,6 +340,7 @@ def main():
                     lr,
                     bs,
                     d_id,
+                    str(dropouts),  # 這裡將 list 轉成 string 儲存
                     f"{acc:.6f}",
                     f"{elapsed_time:.2f}",
                     platform_info,
@@ -405,11 +405,9 @@ def main():
             plt.savefig("output/result_images/keras_best_confusion_matrix.png")
             plt.close()
 
-    # 全部跑完後，畫訓練曲線 (只有當次執行有產生更好的結果時才會有 best_history)
+    # 全部跑完後，畫訓練曲線
     if best_history is not None:
         print("\n繪製本次最佳組合的訓練曲線...")
-
-        # 取得 history dict
         h_dict = best_history.history
 
         plt.figure(figsize=(14, 5))
