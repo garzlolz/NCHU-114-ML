@@ -57,19 +57,19 @@ def build_keras_model(input_dim, num_classes, learning_rate):
     x = Dense(256, name="dense_256")(x)
     x = BatchNormalization(name="batchnorm_1")(x)
     x = Activation("relu", name="activation_1")(x)
-    x = Dropout(0.35, name="dropout_1")(x)
+    x = Dropout(0.4, name="dropout_1")(x)
 
     # 第三層: 128
     x = Dense(128, name="dense_128")(x)
     x = BatchNormalization(name="batchnorm_2")(x)
     x = Activation("relu", name="activation_2")(x)
-    x = Dropout(0.3, name="dropout_2")(x)
+    x = Dropout(0.4, name="dropout_2")(x)
 
     # 第四層: 64
     x = Dense(64, name="dense_64")(x)
     x = BatchNormalization(name="batchnorm_3")(x)
     x = Activation("relu", name="activation_3")(x)
-    x = Dropout(0.25, name="dropout_3")(x)
+    x = Dropout(0.4, name="dropout_3")(x)
 
     outputs = Dense(num_classes, activation="softmax", name="output")(x)
 
@@ -152,8 +152,8 @@ def main():
     # ==================== 4. 訓練模型 ====================
     print("\n步驟 4: 開始訓練")
 
-    lr = 0.0001
-    bs = 18
+    lr = 0.00025
+    bs = 16
 
     print(f"\n--- Training: Seed={TARGET_SEED}, lr={lr}, bs={bs} ---")
 
